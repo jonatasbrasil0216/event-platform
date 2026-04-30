@@ -19,8 +19,10 @@ import {
   registerForEventRequest
 } from "../api/registrations";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { MarkdownContent } from "../components/MarkdownContent";
 import { OrganizerAttendeesCard } from "../components/OrganizerAttendeesCard";
 import { useAuthStore } from "../stores/auth";
+import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
 
 type DetailMetaItem = { key: string; icon: ReactNode; label: string; value: string; sub?: string };
 
@@ -187,7 +189,10 @@ const OrganizerEventDetailPage = ({ id, event, organizerName, eventDate, eventTi
         <div className="org-title-row">
           <div>
             <div className="org-title-meta">
-              <span className="pill detail-category-chip">{event.category[0].toUpperCase() + event.category.slice(1)}</span>
+              <span className={`pill detail-category-chip category-chip ${getCategoryToneClass(event.category)}`}>
+                <span className="category-dot" />
+                {getCategoryLabel(event.category)}
+              </span>
               <span className={`org-published-dot ${event.status !== "published" ? "muted" : ""}`}>
                 ● {event.status[0].toUpperCase() + event.status.slice(1)}
               </span>
@@ -261,11 +266,7 @@ const OrganizerEventDetailPage = ({ id, event, organizerName, eventDate, eventTi
           </article>
           <article className="panel org-about-panel">
             <h3>About this event</h3>
-            {event.description.split("\n").map((line, index) => (
-              <p className="detail-paragraph" key={index}>
-                {line}
-              </p>
-            ))}
+            <MarkdownContent className="markdown-content detail-markdown-content" content={event.description} />
           </article>
         </div>
 
@@ -452,7 +453,10 @@ const AttendeeEventDetailPage = ({
             <Link className="back-link only-desktop" to="/">
               ← Back to events
             </Link>
-            <span className="pill detail-category-chip">{event.category[0].toUpperCase() + event.category.slice(1)}</span>
+            <span className={`pill detail-category-chip category-chip ${getCategoryToneClass(event.category)}`}>
+              <span className="category-dot" />
+              {getCategoryLabel(event.category)}
+            </span>
           </div>
           <h1>{event.name}</h1>
           <div className="detail-meta-grid">
@@ -468,11 +472,7 @@ const AttendeeEventDetailPage = ({
             ))}
           </div>
           <div className="divider" />
-          {event.description.split("\n").map((line, index) => (
-            <p className="detail-paragraph" key={index}>
-              {line}
-            </p>
-          ))}
+          <MarkdownContent className="markdown-content detail-markdown-content" content={event.description} />
           <div className="divider only-mobile" />
           <div className="host-row only-mobile">
             <span className="host-avatar">{hostInitials}</span>

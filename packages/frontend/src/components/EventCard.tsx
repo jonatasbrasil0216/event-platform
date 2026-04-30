@@ -1,6 +1,7 @@
 import type { Event } from "@event-platform/shared";
 import { CalendarDays, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
 
 interface EventCardProps {
   event: Event;
@@ -10,7 +11,7 @@ export const EventCard = ({ event }: EventCardProps) => {
   const ratio = event.registeredCount / event.capacity;
   const warn = ratio > 0.85;
   const isFull = event.registeredCount >= event.capacity;
-  const categoryLabel = event.category[0].toUpperCase() + event.category.slice(1);
+  const categoryLabel = getCategoryLabel(event.category);
   const dateLabel = new Date(event.date).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -23,7 +24,10 @@ export const EventCard = ({ event }: EventCardProps) => {
 
   return (
     <Link className={`event-card ${isFull ? "is-full" : ""}`} to={`/events/${event._id}`}>
-      <span className={`my-reg-category my-reg-category-${event.category}`}>{categoryLabel}</span>
+      <span className={`my-reg-category category-chip ${getCategoryToneClass(event.category)}`}>
+        <span className="category-dot" />
+        {categoryLabel}
+      </span>
       <h3>{event.name}</h3>
       <p className="my-reg-meta">
         <CalendarDays size={14} strokeWidth={1.8} />

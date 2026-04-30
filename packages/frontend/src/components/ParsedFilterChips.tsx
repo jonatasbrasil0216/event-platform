@@ -1,3 +1,4 @@
+import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
 import type { ParsedFilters } from "../api/search";
 
 interface ParsedFilterChipsProps {
@@ -11,8 +12,9 @@ export const ParsedFilterChips = ({ filters, onRemove }: ParsedFilterChipsProps)
       <span>Understood as:</span>
       <div className="chip-wrap">
         {filters.category && (
-          <button className="chip" onClick={() => onRemove("category")} type="button">
-            {filters.category} ×
+          <button className={`chip ${getCategoryToneClass(filters.category)}`} onClick={() => onRemove("category")} type="button">
+            <span className="category-dot" />
+            {getCategoryLabel(filters.category)} ×
           </button>
         )}
         {filters.maxCapacity !== null && (

@@ -3,6 +3,7 @@ import { CalendarDays, Ellipsis, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
 
 interface MyEventCardProps {
   event: Event;
@@ -54,8 +55,9 @@ export const MyEventCard = ({
     <article className="my-events-card">
       <div className="my-events-main">
         <div className="my-events-top-row">
-          <span className={`my-reg-category my-reg-category-${event.category}`}>
-            {event.category[0].toUpperCase() + event.category.slice(1)}
+          <span className={`my-reg-category category-chip ${getCategoryToneClass(event.category)}`}>
+            <span className="category-dot" />
+            {getCategoryLabel(event.category)}
           </span>
           <div className="my-events-menu-wrap" ref={menuRef}>
             <button

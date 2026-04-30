@@ -1,6 +1,7 @@
 import type { Event } from "@event-platform/shared";
 import { CalendarDays, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
 
 interface MyRegistrationCardProps {
   event: Event;
@@ -15,7 +16,7 @@ export const MyRegistrationCard = ({
   cancelDisabled,
   onCancel
 }: MyRegistrationCardProps) => {
-  const categoryLabel = event.category[0].toUpperCase() + event.category.slice(1);
+  const categoryLabel = getCategoryLabel(event.category);
   const hostInitials = organizerName
     .split(" ")
     .map((part) => part[0]?.toUpperCase())
@@ -24,7 +25,10 @@ export const MyRegistrationCard = ({
 
   return (
     <article className="my-reg-card">
-      <span className={`my-reg-category my-reg-category-${event.category}`}>{categoryLabel}</span>
+      <span className={`my-reg-category category-chip ${getCategoryToneClass(event.category)}`}>
+        <span className="category-dot" />
+        {categoryLabel}
+      </span>
       <h3>{event.name}</h3>
       <p className="my-reg-meta">
         <CalendarDays size={14} strokeWidth={1.8} />
