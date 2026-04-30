@@ -7,14 +7,22 @@ import { forbiddenError } from "../lib/errors";
 import { sendError } from "../lib/http";
 import { getMe, login, signup } from "../services/auth";
 import {
+  cancelEvent,
   createEvent,
   deleteEvent,
   getEventById,
   listMyEvents,
   listPublishedEvents,
+  makeEventDraft,
+  republishEvent,
   updateEvent
 } from "../services/events";
-import { cancelRegistration, listMyRegistrations, registerForEvent } from "../services/registrations";
+import {
+  cancelRegistration,
+  listEventAttendees,
+  listMyRegistrations,
+  registerForEvent
+} from "../services/registrations";
 import { parseAndSearch } from "../services/search";
 
 const app = express();
@@ -105,6 +113,45 @@ app.delete("/events/:id", async (req, res, next) => {
   }
 });
 
+app.patch("/events/:id/cancel", async (req, res, next) => {
+  try {
+    const auth = requireAuth(req);
+    if (auth.role !== "organizer") {
+      throw forbiddenError("Organizer access required");
+    }
+    const result = await cancelEvent(req.params.id, auth.userId.toString());
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/events/:id/republish", async (req, res, next) => {
+  try {
+    const auth = requireAuth(req);
+    if (auth.role !== "organizer") {
+      throw forbiddenError("Organizer access required");
+    }
+    const result = await republishEvent(req.params.id, auth.userId.toString());
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/events/:id/draft", async (req, res, next) => {
+  try {
+    const auth = requireAuth(req);
+    if (auth.role !== "organizer") {
+      throw forbiddenError("Organizer access required");
+    }
+    const result = await makeEventDraft(req.params.id, auth.userId.toString());
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post("/events/:id/register", async (req, res, next) => {
   try {
     const auth = requireAuth(req);
@@ -138,6 +185,19 @@ app.get("/registrations/mine", async (req, res, next) => {
       throw forbiddenError("Attendee access required");
     }
     const result = await listMyRegistrations(auth.userId.toString());
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/events/:id/attendees", async (req, res, next) => {
+  try {
+    const auth = requireAuth(req);
+    if (auth.role !== "organizer") {
+      throw forbiddenError("Organizer access required");
+    }
+    const result = await listEventAttendees(req.params.id, auth.userId.toString());
     res.status(200).json(result);
   } catch (error) {
     next(error);

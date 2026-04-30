@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import type { EventCategory } from "@event-platform/shared";
 import { listEventsRequest } from "../api/events";
 import { type ParsedFilters, parseSearchRequest } from "../api/search";
+import { CategoryPills } from "../components/CategoryPills";
+import { DatePickerButton } from "../components/DatePickerButton";
+import { EventCard } from "../components/EventCard";
 import { LoadingBlocks } from "../components/LoadingBlocks";
+import { ParsedFilterChips } from "../components/ParsedFilterChips";
+import { SearchBox } from "../components/SearchBox";
 
 const applyFiltersLocally = (
   events: Awaited<ReturnType<typeof listEventsRequest>>["data"],
@@ -31,6 +35,7 @@ export const BrowseEventsPage = () => {
   const [parsedFilters, setParsedFilters] = useState<ParsedFilters | null>(null);
   const [searchEvents, setSearchEvents] = useState<Awaited<ReturnType<typeof listEventsRequest>>["data"] | null>(null);
   const [activeCategory, setActiveCategory] = useState<"all" | EventCategory>("all");
+  const [selectedDate, setSelectedDate] = useState("");
 
   const eventsQuery = useQuery({
     queryKey: ["events"],
@@ -39,9 +44,21 @@ export const BrowseEventsPage = () => {
 
   const visibleEvents = useMemo(() => {
     const baseEvents = searchEvents ?? eventsQuery.data?.data ?? [];
-    if (activeCategory === "all") return baseEvents;
-    return baseEvents.filter((event) => event.category === activeCategory);
-  }, [activeCategory, eventsQuery.data?.data, searchEvents]);
+    const categoryFiltered =
+      activeCategory === "all" ? baseEvents : baseEvents.filter((event) => event.category === activeCategory);
+
+    if (!selectedDate) {
+      return categoryFiltered;
+    }
+
+    return categoryFiltered.filter((event) => {
+      const eventDate = new Date(event.date);
+      const yyyy = eventDate.getFullYear();
+      const mm = String(eventDate.getMonth() + 1).padStart(2, "0");
+      const dd = String(eventDate.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}` === selectedDate;
+    });
+  }, [activeCategory, eventsQuery.data?.data, searchEvents, selectedDate]);
 
   const runSearch = async () => {
     const trimmed = query.trim();
@@ -82,85 +99,20 @@ export const BrowseEventsPage = () => {
         <div className="section-header browse-title-row">
           <h1>Discover events</h1>
         </div>
-        <div className="search-row">
-          <div className="search-input-wrap">
-            <span className="search-icon" aria-hidden="true">
-              <svg fill="none" height="18" viewBox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
-                <path d="M20 20L17 17" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
-              </svg>
-            </span>
-            <input
-              className="search-input"
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  void runSearch();
-                }
-              }}
-              placeholder="tech meetups next month under 50 people"
-              value={query}
-            />
-            <span className="search-hint">Press ↵</span>
-          </div>
-        </div>
+        <SearchBox
+          onChange={setQuery}
+          onSubmit={() => {
+            void runSearch();
+          }}
+          placeholder="tech meetups next month under 50 people"
+          value={query}
+        />
         {parsedFilters && (
-          <div className="understood-row">
-            <span>Understood as:</span>
-            <div className="chip-wrap">
-              {parsedFilters.category && (
-                <button className="chip" onClick={() => removeChip("category")} type="button">
-                  {parsedFilters.category} ×
-                </button>
-              )}
-              {parsedFilters.maxCapacity !== null && (
-                <button className="chip" onClick={() => removeChip("maxCapacity")} type="button">
-                  Capacity {"<"} {parsedFilters.maxCapacity} ×
-                </button>
-              )}
-              {parsedFilters.minCapacity !== null && (
-                <button className="chip" onClick={() => removeChip("minCapacity")} type="button">
-                  Capacity {">"} {parsedFilters.minCapacity} ×
-                </button>
-              )}
-              {parsedFilters.dateRange.from && parsedFilters.dateRange.to && (
-                <button className="chip" onClick={() => removeChip("dateFrom")} type="button">
-                  {new Date(parsedFilters.dateRange.from).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric"
-                  })}{" "}
-                  -{" "}
-                  {new Date(parsedFilters.dateRange.to).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric"
-                  })}{" "}
-                  ×
-                </button>
-              )}
-              {parsedFilters.keywords.length > 0 && (
-                <button className="chip" onClick={() => removeChip("keywords")} type="button">
-                  {parsedFilters.keywords[0]} ×
-                </button>
-              )}
-            </div>
-          </div>
+          <ParsedFilterChips filters={parsedFilters} onRemove={removeChip} />
         )}
         <div className="filters-row">
-          <div className="category-pills">
-            {(["all", "tech", "networking", "workshop", "social"] as const).map((category) => (
-              <button
-                className={`category-pill ${activeCategory === category ? "active" : ""}`}
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                type="button"
-              >
-                {category === "all" ? "All" : category[0].toUpperCase() + category.slice(1)}
-              </button>
-            ))}
-          </div>
-          <button className="date-filter-btn" type="button">
-            Any date
-          </button>
+          <CategoryPills activeCategory={activeCategory} onChange={setActiveCategory} />
+          <DatePickerButton onChange={setSelectedDate} value={selectedDate} />
         </div>
         <div className="divider" />
       </section>
@@ -174,33 +126,7 @@ export const BrowseEventsPage = () => {
       ) : (
         <section className="cards-grid">
           {visibleEvents.length ? (
-            visibleEvents.map((event) => (
-              <Link className={`event-card ${event.registeredCount >= event.capacity ? "is-full" : ""}`} key={event._id} to={`/events/${event._id}`}>
-                <span className="pill">{event.category[0].toUpperCase() + event.category.slice(1)}</span>
-                <h3>{event.name}</h3>
-                <p className="event-meta">
-                  {new Date(event.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} ·{" "}
-                  {new Date(event.date).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit"
-                  })}
-                </p>
-                <p className="event-location">{event.location}</p>
-                <div className="progress-track thin">
-                  <div
-                    className={`progress-fill ${event.registeredCount / event.capacity > 0.85 ? "warn" : ""}`}
-                    style={{ width: `${Math.min((event.registeredCount / event.capacity) * 100, 100)}%` }}
-                  />
-                </div>
-                <p className={`event-capacity ${event.registeredCount / event.capacity > 0.85 ? "warn" : ""}`}>
-                  {event.registeredCount >= event.capacity
-                    ? "Full"
-                    : event.registeredCount / event.capacity > 0.85
-                      ? `${event.registeredCount} / ${event.capacity} · almost full`
-                      : `${event.registeredCount} / ${event.capacity} registered`}
-                </p>
-              </Link>
-            ))
+            visibleEvents.map((event) => <EventCard event={event} key={event._id} />)
           ) : (
             <article className="panel">
               <h3>No events published yet</h3>

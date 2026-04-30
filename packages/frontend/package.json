@@ -10,10 +10,11 @@
     "test": "echo \"No frontend tests yet\""
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
     "@event-platform/shared": "workspace:*",
+    "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "^5.90.3",
     "date-fns": "^4.1.0",
+    "lucide-react": "^1.14.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.65.0",

@@ -22,7 +22,7 @@ export const listMyEventsRequest = () =>
   });
 
 export const getEventRequest = (id: string) =>
-  apiRequest<{ event: Event }>(`/events/${id}`, {
+  apiRequest<{ event: Event; organizerName: string }>(`/events/${id}`, {
     method: "GET"
   });
 
@@ -43,5 +43,23 @@ export const updateEventRequest = (id: string, input: Partial<EventInput>) =>
 export const deleteEventRequest = (id: string) =>
   apiRequest<void>(`/events/${id}`, {
     method: "DELETE",
+    auth: true
+  });
+
+export const cancelEventRequest = (id: string) =>
+  apiRequest<{ event: Event }>(`/events/${id}/cancel`, {
+    method: "PATCH",
+    auth: true
+  });
+
+export const republishEventRequest = (id: string) =>
+  apiRequest<{ event: Event }>(`/events/${id}/republish`, {
+    method: "PATCH",
+    auth: true
+  });
+
+export const makeEventDraftRequest = (id: string) =>
+  apiRequest<{ event: Event }>(`/events/${id}/draft`, {
+    method: "PATCH",
     auth: true
   });

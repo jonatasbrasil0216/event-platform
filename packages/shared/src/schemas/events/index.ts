@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const eventCategorySchema = z.enum(["tech", "networking", "workshop", "social", "other"]);
-export const eventStatusSchema = z.enum(["published", "cancelled"]);
+export const eventStatusSchema = z.enum(["draft", "published", "cancelled", "completed"]);
 
 export const createEventSchema = z.object({
   name: z.string().min(3).max(100),

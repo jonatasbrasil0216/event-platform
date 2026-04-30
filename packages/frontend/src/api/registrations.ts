@@ -14,7 +14,19 @@ export const cancelRegistrationRequest = (eventId: string) =>
   });
 
 export const listMyRegistrationsRequest = () =>
-  apiRequest<{ data: Array<{ registration: Registration; event: Event }> }>("/registrations/mine", {
-    method: "GET",
-    auth: true
-  });
+  apiRequest<{ data: Array<{ registration: Registration; event: Event; organizerName: string }> }>(
+    "/registrations/mine",
+    {
+      method: "GET",
+      auth: true
+    }
+  );
+
+export const listEventAttendeesRequest = (eventId: string) =>
+  apiRequest<{ data: Array<{ _id: string; name: string; email: string; registeredAt: string }>; total: number }>(
+    `/events/${eventId}/attendees`,
+    {
+      method: "GET",
+      auth: true
+    }
+  );

@@ -13,14 +13,24 @@ interface EventDoc {
   location: string;
   capacity: number;
   registeredCount: number;
-  status: "published" | "cancelled";
+  status: "draft" | "published" | "cancelled" | "completed";
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface UserDoc {
+  _id: ObjectId;
+  name: string;
 }
 
 const eventsCollection = async (): Promise<Collection<EventDoc>> => {
   const db = await getDb();
   return db.collection<EventDoc>("events");
+};
+
+const usersCollection = async (): Promise<Collection<UserDoc>> => {
+  const db = await getDb();
+  return db.collection<UserDoc>("users");
 };
 
 const toEvent = (doc: EventDoc): Event => ({
@@ -71,18 +81,20 @@ export const listPublishedEvents = async (): Promise<{ data: Event[]; nextCursor
   return { data: docs.map(toEvent), nextCursor: null };
 };
 
-export const getEventById = async (eventId: string): Promise<{ event: Event }> => {
+export const getEventById = async (eventId: string): Promise<{ event: Event; organizerName: string }> => {
   if (!ObjectId.isValid(eventId)) {
     throw validationError("Invalid event id");
   }
 
   const events = await eventsCollection();
+  const users = await usersCollection();
   const doc = await events.findOne({ _id: new ObjectId(eventId) });
   if (!doc) {
     throw notFoundError("Event not found");
   }
 
-  return { event: toEvent(doc) };
+  const organizer = await users.findOne({ _id: doc.organizerId });
+  return { event: toEvent(doc), organizerName: organizer?.name ?? "Event organizer" };
 };
 
 export const listMyEvents = async (organizerId: string): Promise<{ data: Event[] }> => {
@@ -149,8 +161,74 @@ export const deleteEvent = async (eventId: string, organizerId: string): Promise
     throw forbiddenError("You can only delete your own events");
   }
 
-  await events.updateOne(
-    { _id: existing._id },
-    { $set: { status: "cancelled", updatedAt: new Date() } }
-  );
+  await events.deleteOne({ _id: existing._id });
+};
+
+export const cancelEvent = async (eventId: string, organizerId: string): Promise<{ event: Event }> => {
+  if (!ObjectId.isValid(eventId)) {
+    throw validationError("Invalid event id");
+  }
+
+  const events = await eventsCollection();
+  const existing = await events.findOne({ _id: new ObjectId(eventId) });
+  if (!existing) {
+    throw notFoundError("Event not found");
+  }
+  if (existing.organizerId.toString() !== organizerId) {
+    throw forbiddenError("You can only cancel your own events");
+  }
+
+  await events.updateOne({ _id: existing._id }, { $set: { status: "cancelled", updatedAt: new Date() } });
+  const cancelled = await events.findOne({ _id: existing._id });
+  if (!cancelled) {
+    throw notFoundError("Event not found after cancel");
+  }
+
+  return { event: toEvent(cancelled) };
+};
+
+export const republishEvent = async (eventId: string, organizerId: string): Promise<{ event: Event }> => {
+  if (!ObjectId.isValid(eventId)) {
+    throw validationError("Invalid event id");
+  }
+
+  const events = await eventsCollection();
+  const existing = await events.findOne({ _id: new ObjectId(eventId) });
+  if (!existing) {
+    throw notFoundError("Event not found");
+  }
+  if (existing.organizerId.toString() !== organizerId) {
+    throw forbiddenError("You can only republish your own events");
+  }
+
+  await events.updateOne({ _id: existing._id }, { $set: { status: "published", updatedAt: new Date() } });
+  const published = await events.findOne({ _id: existing._id });
+  if (!published) {
+    throw notFoundError("Event not found after republish");
+  }
+
+  return { event: toEvent(published) };
+};
+
+export const makeEventDraft = async (eventId: string, organizerId: string): Promise<{ event: Event }> => {
+  if (!ObjectId.isValid(eventId)) {
+    throw validationError("Invalid event id");
+  }
+
+  const events = await eventsCollection();
+  const existing = await events.findOne({ _id: new ObjectId(eventId) });
+  if (!existing) {
+    throw notFoundError("Event not found");
+  }
+  if (existing.organizerId.toString() !== organizerId) {
+    throw forbiddenError("You can only update your own events");
+  }
+
+  await events.updateOne({ _id: existing._id }, { $set: { status: "draft", updatedAt: new Date() } });
+  const draft = await events.findOne({ _id: existing._id });
+  if (!draft) {
+    throw notFoundError("Event not found after draft update");
+  }
+
+  return { event: toEvent(draft) };
 };

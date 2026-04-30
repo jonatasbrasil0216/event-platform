@@ -2,7 +2,7 @@ export type UserRole = "organizer" | "attendee";
 
 export type EventCategory = "tech" | "networking" | "workshop" | "social" | "other";
 
-export type EventStatus = "published" | "cancelled";
+export type EventStatus = "draft" | "published" | "cancelled" | "completed";
 
 export type RegistrationStatus = "active" | "cancelled";
 

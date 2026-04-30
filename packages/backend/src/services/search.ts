@@ -15,7 +15,7 @@ interface EventDoc {
   location: string;
   capacity: number;
   registeredCount: number;
-  status: "published" | "cancelled";
+  status: "draft" | "published" | "cancelled" | "completed";
   createdAt: Date;
   updatedAt: Date;
 }

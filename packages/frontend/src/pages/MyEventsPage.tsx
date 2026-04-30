@@ -1,13 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { deleteEventRequest, listMyEventsRequest } from "../api/events";
+import {
+  cancelEventRequest,
+  createEventRequest,
+  deleteEventRequest,
+  listMyEventsRequest,
+  republishEventRequest
+} from "../api/events";
 import { LoadingBlocks } from "../components/LoadingBlocks";
+import { MyEventCard } from "../components/MyEventCard";
+import { NewEventCard } from "../components/NewEventCard";
+import { SegmentedCountTabs } from "../components/SegmentedCountTabs";
 import { useAuthStore } from "../stores/auth";
 
 export const MyEventsPage = () => {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<"published" | "draft" | "past" | "cancelled">("published");
 
   const eventsQuery = useQuery({
     queryKey: ["my-events"],
@@ -18,7 +30,31 @@ export const MyEventsPage = () => {
   const deleteMutation = useMutation({
     mutationFn: deleteEventRequest,
     onSuccess: () => {
+      toast.success("Event discarded");
+      queryClient.invalidateQueries({ queryKey: ["my-events"] });
+    },
+    onError: (error) => toast.error(error.message)
+  });
+  const cancelMutation = useMutation({
+    mutationFn: cancelEventRequest,
+    onSuccess: () => {
       toast.success("Event cancelled");
+      queryClient.invalidateQueries({ queryKey: ["my-events"] });
+    },
+    onError: (error) => toast.error(error.message)
+  });
+  const republishMutation = useMutation({
+    mutationFn: republishEventRequest,
+    onSuccess: () => {
+      toast.success("Event republished");
+      queryClient.invalidateQueries({ queryKey: ["my-events"] });
+    },
+    onError: (error) => toast.error(error.message)
+  });
+  const duplicateMutation = useMutation({
+    mutationFn: createEventRequest,
+    onSuccess: () => {
+      toast.success("Event duplicated");
       queryClient.invalidateQueries({ queryKey: ["my-events"] });
     },
     onError: (error) => toast.error(error.message)
@@ -35,16 +71,64 @@ export const MyEventsPage = () => {
     );
   }
 
+  const allEvents = eventsQuery.data?.data ?? [];
+  const now = Date.now();
+  const cancelledEvents = useMemo(() => allEvents.filter((event) => event.status === "cancelled"), [allEvents]);
+  const draftEvents = useMemo(() => allEvents.filter((event) => event.status === "draft"), [allEvents]);
+  const pastEvents = useMemo(
+    () =>
+      allEvents.filter(
+        (event) =>
+          event.status !== "cancelled" &&
+          event.status !== "draft" &&
+          (new Date(event.date).getTime() < now || event.status === "completed")
+      ),
+    [allEvents, now]
+  );
+  const publishedEvents = useMemo(
+    () =>
+      allEvents.filter(
+        (event) =>
+          event.status === "published" &&
+          new Date(event.date).getTime() >= now
+      ),
+    [allEvents, now]
+  );
+  const visibleEvents =
+    activeTab === "published"
+      ? publishedEvents
+      : activeTab === "draft"
+        ? draftEvents
+        : activeTab === "past"
+          ? pastEvents
+          : cancelledEvents;
+
   return (
-    <main className="container">
-      <section className="section-header">
+    <main className="container my-events-page">
+      <section className="my-events-head">
         <div>
-          <p className="eyebrow">Organizer Dashboard</p>
-          <h1>My Events</h1>
+          <h1>My events</h1>
+          <p>Manage events you're hosting.</p>
         </div>
-        <Link className="btn btn-primary" to="/events/new">
-          Create Event
+        <Link className="btn btn-create-event only-desktop" to="/events/new">
+          <Plus size={16} strokeWidth={2.2} />
+          Create event
         </Link>
+      </section>
+
+      <section className="my-events-tabs-wrap">
+        <SegmentedCountTabs
+          activeId={activeTab}
+          ariaLabel="My events timeline"
+          className="my-events-tabs"
+          items={[
+            { id: "published", label: "Published", count: publishedEvents.length },
+            { id: "draft", label: "Drafts", count: draftEvents.length },
+            { id: "past", label: "Past", count: pastEvents.length },
+            { id: "cancelled", label: "Cancelled", count: cancelledEvents.length }
+          ]}
+          onChange={setActiveTab}
+        />
       </section>
 
       {eventsQuery.isLoading ? (
@@ -55,42 +139,60 @@ export const MyEventsPage = () => {
           <p>Please refresh the page and try again.</p>
         </section>
       ) : (
-        <section className="event-list">
-          {eventsQuery.data?.data.length ? (
-            eventsQuery.data.data.map((event) => (
-              <article className="event-row" key={event._id}>
-                <div>
-                  <h3>{event.name}</h3>
-                  <p>
-                    {new Date(event.date).toLocaleString()} - {event.location}
-                  </p>
-                  <small>
-                    {event.registeredCount}/{event.capacity} registered - {event.status}
-                  </small>
-                </div>
-                <div className="row-actions">
-                  <Link className="btn btn-secondary" to={`/events/${event._id}/edit`}>
-                    Edit
-                  </Link>
-                  <button
-                    className="btn btn-secondary"
-                    disabled={deleteMutation.isPending}
-                    onClick={() => deleteMutation.mutate(event._id)}
-                    type="button"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </article>
+        <section className="my-events-list">
+          {visibleEvents.length ? (
+            visibleEvents.map((event) => (
+              <MyEventCard
+                cancelDisabled={cancelMutation.isPending}
+                republishDisabled={republishMutation.isPending}
+                discardDisabled={deleteMutation.isPending}
+                duplicateDisabled={duplicateMutation.isPending}
+                event={event}
+                key={event._id}
+                onCancel={(eventId) => cancelMutation.mutate(eventId)}
+                onRepublish={(eventId) => republishMutation.mutate(eventId)}
+                onDiscard={(eventId) => deleteMutation.mutate(eventId)}
+                onDuplicate={(sourceEvent) =>
+                  duplicateMutation.mutate({
+                    name: `${sourceEvent.name} (Copy)`,
+                    description: sourceEvent.description,
+                    category: sourceEvent.category,
+                    date: sourceEvent.date,
+                    location: sourceEvent.location,
+                    capacity: sourceEvent.capacity
+                  })
+                }
+              />
             ))
           ) : (
             <article className="panel">
-              <h3>No events yet</h3>
-              <p>Create your first event to start accepting registrations.</p>
+              <h3>
+                {activeTab === "published"
+                  ? "No published events"
+                  : activeTab === "draft"
+                    ? "No draft events"
+                    : activeTab === "past"
+                    ? "No past events"
+                    : "No cancelled events"}
+              </h3>
+              <p>
+                {activeTab === "published"
+                  ? "Create and publish your first event to start accepting registrations."
+                  : activeTab === "draft"
+                    ? "You don't have any draft events right now."
+                    : activeTab === "past"
+                      ? "Your completed events will appear here."
+                      : "Cancelled events will appear here."}
+              </p>
             </article>
           )}
+          {(activeTab === "published" || activeTab === "draft") && <NewEventCard />}
         </section>
       )}
+
+      <Link aria-label="Create event" className="my-events-fab only-mobile" to="/events/new">
+        <Plus size={22} strokeWidth={2.2} />
+      </Link>
     </main>
   );
 };
