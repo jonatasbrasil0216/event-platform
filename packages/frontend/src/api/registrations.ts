@@ -24,6 +24,8 @@ export type ListEventAttendeesParams = {
   q?: string;
   sort?: "recent" | "oldest";
   cursor?: string;
+  /** 1-based; omit to use cursor-based paging (legacy API path). */
+  page?: number;
   limit?: number;
 };
 

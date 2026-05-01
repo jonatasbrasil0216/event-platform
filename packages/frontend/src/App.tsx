@@ -1,34 +1,15 @@
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactElement } from "react";
-import { BrowseEventsPage } from "./pages/BrowseEventsPage";
 import { Navbar } from "./components/Navbar";
-import { EventDetailPage } from "./pages/EventDetailPage";
-import { EventFormPage } from "./pages/EventFormPage";
-import { LoginPage } from "./pages/LoginPage";
-import { MyEventsPage } from "./pages/MyEventsPage";
-import { MyRegistrationsPage } from "./pages/MyRegistrationsPage";
-import { SignupPage } from "./pages/SignupPage";
+import { LoginPage } from "./pages/auth/LoginPage";
+import { SignupPage } from "./pages/auth/SignupPage";
+import { BrowseEventsPage } from "./pages/browse-events/BrowseEventsPage";
+import { EventDetailPage } from "./pages/event-detail/EventDetailPage";
+import { EventFormPage } from "./pages/event-form/EventFormPage";
+import { HomePage } from "./pages/home/HomePage";
+import { MyEventsPage } from "./pages/my-events/MyEventsPage";
+import { MyRegistrationsPage } from "./pages/my-registrations/MyRegistrationsPage";
 import { useAuthStore } from "./stores/auth";
-
-const HomePage = () => (
-  <main className="container">
-    <section className="hero">
-      <p className="eyebrow">Event Platform</p>
-      <h1>Discover events worth showing up for.</h1>
-      <p className="hero-copy">
-        A responsive event experience for attendees and organizers. Start by creating an account.
-      </p>
-      <div className="hero-actions">
-        <Link className="btn btn-primary" to="/signup">
-          Create account
-        </Link>
-        <Link className="btn btn-secondary" to="/login">
-          Sign in
-        </Link>
-      </div>
-    </section>
-  </main>
-);
 
 export const App = () => {
   const user = useAuthStore((s) => s.user);

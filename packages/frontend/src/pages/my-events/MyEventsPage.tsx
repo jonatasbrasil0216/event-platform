@@ -9,13 +9,13 @@ import {
   deleteEventRequest,
   listMyEventsRequest,
   republishEventRequest
-} from "../api/events";
-import { LoadingBlocks } from "../components/LoadingBlocks";
-import { MyEventCard } from "../components/MyEventCard";
-import { NewEventCard } from "../components/NewEventCard";
-import { PaginationControls } from "../components/PaginationControls";
-import { SegmentedCountTabs } from "../components/SegmentedCountTabs";
-import { useAuthStore } from "../stores/auth";
+} from "../../api/events";
+import { LoadingBlocks } from "../../components/LoadingBlocks";
+import { MyEventCard } from "../../components/MyEventCard";
+import { NewEventCard } from "../../components/NewEventCard";
+import { PaginationControls } from "../../components/PaginationControls";
+import { SegmentedCountTabs } from "../../components/SegmentedCountTabs";
+import { useAuthStore } from "../../stores/auth";
 import styles from "./MyEventsPage.module.css";
 
 export const MyEventsPage = () => {
@@ -165,11 +165,11 @@ export const MyEventsPage = () => {
             </article>
           )}
           {showNewEventCard && <NewEventCard />}
-          {pageCount > 1 && (
+          {pageCount > 1 ? (
             <div className="flex justify-center mt-4 col-span-full">
               <PaginationControls onPageChange={setPage} page={page} pageCount={pageCount} />
             </div>
-          )}
+          ) : null}
         </section>
       )}
 

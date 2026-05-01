@@ -30,6 +30,8 @@ interface ListEventAttendeesInput {
   q?: string;
   sort: "recent" | "oldest";
   cursor?: string;
+  /** 1-based page; skips cursor-based slicing when provided. */
+  page?: number;
   limit: number;
 }
 
@@ -245,8 +247,6 @@ export const listEventAttendees = async (
   }
 
   const direction = input.sort === "oldest" ? 1 : -1;
-  const cursor = decodeCursor(input.cursor);
-  const cursorFilter = dateCursorFilter("registeredAt", cursor, direction);
   let attendeeUserFilter: Record<string, unknown> = {};
   if (input.q) {
     const escaped = input.q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -255,16 +255,30 @@ export const listEventAttendees = async (
     attendeeUserFilter = { userId: { $in: matchingUsers.map((user) => user._id) } };
   }
   const baseRegFilter: Filter<RegistrationDoc> = { eventId: parsedEventId, status: "active", ...attendeeUserFilter };
-  const regFilter =
-    Object.keys(cursorFilter).length > 0
-      ? { $and: [baseRegFilter, cursorFilter] }
-      : baseRegFilter;
 
-  const regDocs = await registrations
-    .find(regFilter)
-    .sort({ registeredAt: direction, _id: direction })
-    .limit(input.limit + 1)
-    .toArray();
+  const useOffsetPage = input.page != null && input.page >= 1;
+  let regDocs: RegistrationDoc[];
+
+  if (useOffsetPage) {
+    const skip = (input.page! - 1) * input.limit;
+    regDocs = await registrations
+      .find(baseRegFilter)
+      .sort({ registeredAt: direction, _id: direction })
+      .skip(skip)
+      .limit(input.limit + 1)
+      .toArray();
+  } else {
+    const cursor = decodeCursor(input.cursor);
+    const cursorFilter = dateCursorFilter("registeredAt", cursor, direction);
+    const regFilter =
+      Object.keys(cursorFilter).length > 0 ? { $and: [baseRegFilter, cursorFilter] } : baseRegFilter;
+
+    regDocs = await registrations
+      .find(regFilter)
+      .sort({ registeredAt: direction, _id: direction })
+      .limit(input.limit + 1)
+      .toArray();
+  }
 
   const userIds = [...new Set(regDocs.map((registration) => registration.userId.toString()))].map(
     (id) => new ObjectId(id)

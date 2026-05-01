@@ -7,19 +7,18 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
-import { loginRequest } from "../api/auth";
-import { useAuthStore } from "../stores/auth";
+import { loginRequest } from "../../api/auth";
+import { useAuthStore } from "../../stores/auth";
 import styles from "./auth.module.css";
 
-const schema = loginSchema;
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof loginSchema>;
 
 export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" }
   });
 
@@ -39,10 +38,7 @@ export const LoginPage = () => {
         <p className="eyebrow">Welcome back</p>
         <h1>Sign in</h1>
         <p className={styles.copy}>Access your dashboard and manage events in seconds.</p>
-        <form
-          className={styles.form}
-          onSubmit={form.handleSubmit((values) => loginMutation.mutate(values))}
-        >
+        <form className={styles.form} onSubmit={form.handleSubmit((values) => loginMutation.mutate(values))}>
           <label>
             Email
             <input type="email" placeholder="you@example.com" {...form.register("email")} />

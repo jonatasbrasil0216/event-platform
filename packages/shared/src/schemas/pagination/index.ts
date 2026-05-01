@@ -20,7 +20,9 @@ export const myEventsQuerySchema = paginatedQuerySchema.extend({
 
 export const attendeesQuerySchema = paginatedQuerySchema.extend({
   q: z.preprocess(emptyToUndefined, z.string().trim().min(1).max(120).optional()),
-  sort: z.enum(["recent", "oldest"]).default("recent")
+  sort: z.enum(["recent", "oldest"]).default("recent"),
+  /** Offset-style page (1-based). When set, `cursor` is ignored for attendee listing. */
+  page: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).optional())
 });
 
 export const myRegistrationsQuerySchema = paginatedQuerySchema.extend({

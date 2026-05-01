@@ -7,19 +7,18 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
-import { signupRequest } from "../api/auth";
-import { useAuthStore } from "../stores/auth";
+import { signupRequest } from "../../api/auth";
+import { useAuthStore } from "../../stores/auth";
 import styles from "./auth.module.css";
 
-const schema = signupSchema;
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof signupSchema>;
 
 export const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(signupSchema),
     defaultValues: { email: "", password: "", name: "", role: "attendee" }
   });
 
@@ -39,10 +38,7 @@ export const SignupPage = () => {
         <p className="eyebrow">Join in minutes</p>
         <h1>Create account</h1>
         <p className={styles.copy}>Choose your role and start hosting or discovering events.</p>
-        <form
-          className={styles.form}
-          onSubmit={form.handleSubmit((values) => signupMutation.mutate(values))}
-        >
+        <form className={styles.form} onSubmit={form.handleSubmit((values) => signupMutation.mutate(values))}>
           <label>
             Full name
             <input type="text" placeholder="Jane Doe" {...form.register("name")} />

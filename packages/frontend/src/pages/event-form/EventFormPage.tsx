@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { EventCategory } from "@event-platform/shared";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -12,31 +11,19 @@ import {
   makeEventDraftRequest,
   republishEventRequest,
   updateEventRequest
-} from "../api/events";
-import { MarkdownEditorField } from "../components/MarkdownEditorField";
-import { useAuthStore } from "../stores/auth";
-import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
+} from "../../api/events";
+import { MarkdownEditorField } from "../../components/MarkdownEditorField";
+import { useAuthStore } from "../../stores/auth";
+import { getCategoryLabel, getCategoryToneClass } from "../../utils/categoryTheme";
 import {
   eventFormSchema,
   validateCapacityAtLeastRegistrations,
   validateEventDateNotInPast,
   type EventFormValues
-} from "../utils/eventFormValidation";
+} from "../../utils/eventFormValidation";
+import { EVENT_FORM_CATEGORIES } from "./constants";
 import styles from "./EventFormPage.module.css";
-
-type FormValues = EventFormValues;
-
-const categories: EventCategory[] = ["tech", "networking", "workshop", "social", "other"];
-
-const toLocalInputParts = (isoDate: string) => {
-  const parsedDate = new Date(isoDate);
-  const year = parsedDate.getFullYear();
-  const month = `${parsedDate.getMonth() + 1}`.padStart(2, "0");
-  const day = `${parsedDate.getDate()}`.padStart(2, "0");
-  const hours = `${parsedDate.getHours()}`.padStart(2, "0");
-  const minutes = `${parsedDate.getMinutes()}`.padStart(2, "0");
-  return { date: `${year}-${month}-${day}`, time: `${hours}:${minutes}` };
-};
+import { toLocalInputParts } from "./toLocalInputParts";
 
 export const EventFormPage = () => {
   const { id } = useParams();
@@ -47,7 +34,7 @@ export const EventFormPage = () => {
   const [timeValue, setTimeValue] = useState("");
   const [submitIntent, setSubmitIntent] = useState<"publish" | "draft">("publish");
 
-  const form = useForm<FormValues>({
+  const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: { name: "", description: "", category: "tech", date: "", location: "", capacity: 50 }
   });
@@ -86,7 +73,7 @@ export const EventFormPage = () => {
   }, [dateValue, timeValue, form]);
 
   const mutation = useMutation({
-    mutationFn: async (values: FormValues) => {
+    mutationFn: async (values: EventFormValues) => {
       const payload = {
         ...values,
         name: values.name.trim(),
@@ -207,7 +194,7 @@ export const EventFormPage = () => {
             <div className={`${styles.inputIconWrap} ${getCategoryToneClass(selectedCategory)}`}>
               <span className={styles.leadingDot} />
               <select {...form.register("category")} className={styles.withLeadingDot}>
-                {categories.map((category) => (
+                {EVENT_FORM_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
                     {getCategoryLabel(category)}
                   </option>

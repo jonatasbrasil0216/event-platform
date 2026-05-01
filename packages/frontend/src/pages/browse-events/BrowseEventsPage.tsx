@@ -2,14 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { EventCategory } from "@event-platform/shared";
-import { listEventsRequest } from "../api/events";
-import { CategoryPills } from "../components/CategoryPills";
-import { DatePickerButton } from "../components/DatePickerButton";
-import { EventCard } from "../components/EventCard";
-import { LoadingBlocks } from "../components/LoadingBlocks";
-import { ParsedFilterChips } from "../components/ParsedFilterChips";
-import { PaginationControls } from "../components/PaginationControls";
-import { SearchBox } from "../components/SearchBox";
+import { listEventsRequest } from "../../api/events";
+import { CategoryPills } from "../../components/CategoryPills";
+import { DatePickerButton } from "../../components/DatePickerButton";
+import { EventCard } from "../../components/EventCard";
+import { LoadingBlocks } from "../../components/LoadingBlocks";
+import { ParsedFilterChips } from "../../components/ParsedFilterChips";
+import { PaginationControls } from "../../components/PaginationControls";
+import { SearchBox } from "../../components/SearchBox";
+import { BROWSE_EVENTS_PAGE_SIZE } from "./constants";
 import styles from "./BrowseEventsPage.module.css";
 
 export const BrowseEventsPage = () => {
@@ -28,7 +29,7 @@ export const BrowseEventsPage = () => {
         category: activeCategory === "all" ? undefined : activeCategory,
         date: selectedDate || undefined,
         cursor: cursorByPage[page],
-        limit: 12
+        limit: BROWSE_EVENTS_PAGE_SIZE
       })
   });
 
@@ -82,9 +83,9 @@ export const BrowseEventsPage = () => {
           placeholder="tech meetups next month under 50 people"
           value={query}
         />
-        {eventsQuery.data?.filters && (
+        {eventsQuery.data?.filters ? (
           <ParsedFilterChips filters={eventsQuery.data.filters} onRemove={removeChip} />
-        )}
+        ) : null}
         <div className={styles.filtersRow}>
           <CategoryPills
             activeCategory={activeCategory}
@@ -120,7 +121,7 @@ export const BrowseEventsPage = () => {
               <p>Check back soon for upcoming sessions.</p>
             </article>
           )}
-          {pageCount > 1 && (
+          {pageCount > 1 ? (
             <div className={styles.listPagination}>
               <PaginationControls
                 onPageChange={(nextPage) => {
@@ -131,7 +132,7 @@ export const BrowseEventsPage = () => {
                 pageCount={pageCount}
               />
             </div>
-          )}
+          ) : null}
         </section>
       )}
     </main>

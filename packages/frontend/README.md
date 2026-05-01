@@ -27,7 +27,7 @@ Parallel dev with the API: from repo root run `pnpm dev` (runs backend + fronten
 
 ## Layout (high level)
 
-- `src/pages/` — route-level screens (browse, auth, organizer, registrations, event detail/edit).
+- `src/pages/` — route screens grouped by feature: `browse-events/`, `auth/`, `event-detail/`, `event-form/`, `home/`, `my-events/`, `my-registrations/` (each co-locates its `*.module.css` where applicable).
 - `src/components/` — reusable UI (cards, dialogs, search, markdown, layout).
 - `src/api/` — fetch helpers (`apiRequest`, event/registration/search/auth clients).
 - `src/stores/` — Zustand (auth session).

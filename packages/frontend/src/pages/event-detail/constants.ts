@@ -1,0 +1,2 @@
+export const ATTENDEES_PAGE_SIZE = 5;
+export const ATTENDEE_SEARCH_DEBOUNCE_MS = 350;

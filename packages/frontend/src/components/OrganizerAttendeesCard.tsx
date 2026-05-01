@@ -43,14 +43,17 @@ export const OrganizerAttendeesCard = ({
         <span>{total} registered</span>
       </div>
       <div className={styles.controls}>
-        <label className={styles.search}>
-          <Search size={14} strokeWidth={1.8} />
-          <input
-            onChange={(queryEvent) => onAttendeeQueryChange(queryEvent.target.value)}
-            placeholder="Search attendees"
-            value={attendeeQuery}
-          />
-        </label>
+        <div className={styles.searchShell}>
+          <label className={styles.search}>
+            <Search size={16} strokeWidth={2} aria-hidden />
+            <input
+              onChange={(queryEvent) => onAttendeeQueryChange(queryEvent.target.value)}
+              placeholder="Search attendees"
+              type="search"
+              value={attendeeQuery}
+            />
+          </label>
+        </div>
         <select
           className={styles.sort}
           onChange={(sortEvent) =>

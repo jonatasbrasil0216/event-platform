@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { cancelRegistrationRequest, listMyRegistrationsRequest } from "../api/registrations";
-import { LoadingBlocks } from "../components/LoadingBlocks";
-import { MyRegistrationCard } from "../components/MyRegistrationCard";
-import { PaginationControls } from "../components/PaginationControls";
-import { SegmentedCountTabs } from "../components/SegmentedCountTabs";
-import { useAuthStore } from "../stores/auth";
+import { cancelRegistrationRequest, listMyRegistrationsRequest } from "../../api/registrations";
+import { LoadingBlocks } from "../../components/LoadingBlocks";
+import { MyRegistrationCard } from "../../components/MyRegistrationCard";
+import { PaginationControls } from "../../components/PaginationControls";
+import { SegmentedCountTabs } from "../../components/SegmentedCountTabs";
+import { useAuthStore } from "../../stores/auth";
 import styles from "./MyRegistrationsPage.module.css";
 
 export const MyRegistrationsPage = () => {
@@ -103,11 +103,11 @@ export const MyRegistrationsPage = () => {
               <p>Browse events and register to build your schedule.</p>
             </article>
           )}
-          {pageCount > 1 && (
+          {pageCount > 1 ? (
             <div className={styles.listPagination}>
               <PaginationControls onPageChange={setPage} page={page} pageCount={pageCount} />
             </div>
-          )}
+          ) : null}
         </section>
       )}
     </main>
