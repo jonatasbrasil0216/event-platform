@@ -248,14 +248,11 @@ const run = async () => {
   );
 
   await client.close();
-  // eslint-disable-next-line no-console
   console.log(`Seed complete. Password for all seed users: ${password}`);
-  // eslint-disable-next-line no-console
   console.log(`Seeded ${organizers.length} organizers, ${attendees.length} attendees, ${eventSeeds.length} events.`);
 };
 
 run().catch((error) => {
-  // eslint-disable-next-line no-console
   console.error("Seed failed:", error);
   process.exit(1);
 });

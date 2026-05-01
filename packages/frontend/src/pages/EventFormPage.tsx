@@ -1,12 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createEventSchema, type EventCategory } from "@event-platform/shared";
+import type { EventCategory } from "@event-platform/shared";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChevronDown, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { z } from "zod";
 import {
   createEventRequest,
   getEventRequest,
@@ -17,33 +16,15 @@ import {
 import { MarkdownEditorField } from "../components/MarkdownEditorField";
 import { useAuthStore } from "../stores/auth";
 import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
+import {
+  eventFormSchema,
+  validateCapacityAtLeastRegistrations,
+  validateEventDateNotInPast,
+  type EventFormValues
+} from "../utils/eventFormValidation";
 import styles from "./EventFormPage.module.css";
 
-const localDateTimeSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Invalid datetime")
-  .refine((value) => !Number.isNaN(new Date(value).getTime()), "Invalid datetime");
-
-const stripMarkdown = (value: string) =>
-  value
-    .replace(/!\[[^\]]*]\([^)]*\)/g, " ")
-    .replace(/\[[^\]]*]\([^)]*\)/g, " ")
-    .replace(/[`*_>#~\-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const schema = createEventSchema.extend({
-  name: z.string().trim().min(3, "Event name must be at least 3 characters").max(100, "Event name must be at most 100 characters"),
-  description: z
-    .string()
-    .trim()
-    .min(10, "Description must be at least 10 characters")
-    .max(2000, "Description must be at most 2000 characters")
-    .refine((value) => stripMarkdown(value).length >= 10, "Description must include at least 10 readable characters"),
-  location: z.string().trim().min(2, "Location must be at least 2 characters").max(200, "Location must be at most 200 characters"),
-  date: localDateTimeSchema
-});
-type FormValues = z.infer<typeof schema>;
+type FormValues = EventFormValues;
 
 const categories: EventCategory[] = ["tech", "networking", "workshop", "social", "other"];
 
@@ -57,11 +38,6 @@ const toLocalInputParts = (isoDate: string) => {
   return { date: `${year}-${month}-${day}`, time: `${hours}:${minutes}` };
 };
 
-const isFutureDateTime = (value: string) => {
-  const parsedMs = new Date(value).getTime();
-  return Number.isFinite(parsedMs) && parsedMs > Date.now();
-};
-
 export const EventFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -72,7 +48,7 @@ export const EventFormPage = () => {
   const [submitIntent, setSubmitIntent] = useState<"publish" | "draft">("publish");
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(eventFormSchema),
     defaultValues: { name: "", description: "", category: "tech", date: "", location: "", capacity: 50 }
   });
   const selectedCategory = form.watch("category");
@@ -184,7 +160,10 @@ export const EventFormPage = () => {
         <input
           {...form.register("date", {
             validate: (value) =>
-              allowPastDateForEdit || isFutureDateTime(value) || "Date and time must be in the future"
+              validateEventDateNotInPast(value, {
+                allowPastDateForEdit,
+                nowMs: Date.now()
+              })
           })}
           type="hidden"
         />
@@ -274,8 +253,7 @@ export const EventFormPage = () => {
               <input
                 {...form.register("capacity", {
                   valueAsNumber: true,
-                  validate: (value) =>
-                    value >= minCapacity || `Capacity cannot be lower than current registrations (${minCapacity})`
+                  validate: (value) => validateCapacityAtLeastRegistrations(value, minCapacity)
                 })}
                 min={minCapacity}
                 type="number"

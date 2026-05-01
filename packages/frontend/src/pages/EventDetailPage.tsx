@@ -35,13 +35,12 @@ const buildDetailMetaItems = (eventDate: string, eventTime: string, location: st
 interface OrganizerDetailProps {
   id: string;
   event: Event;
-  organizerName: string;
   eventDate: string;
   eventTime: string;
   ratio: number;
 }
 
-const OrganizerEventDetailPage = ({ id, event, organizerName, eventDate, eventTime, ratio }: OrganizerDetailProps) => {
+const OrganizerEventDetailPage = ({ id, event, eventDate, eventTime, ratio }: OrganizerDetailProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [attendeeQuery, setAttendeeQuery] = useState("");
@@ -503,7 +502,6 @@ export const EventDetailPage = () => {
         eventDate={eventDate}
         eventTime={eventTime}
         id={id}
-        organizerName={organizerName}
         ratio={ratio}
       />
     );

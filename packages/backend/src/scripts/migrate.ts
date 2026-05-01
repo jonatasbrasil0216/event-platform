@@ -38,12 +38,10 @@ const run = async () => {
   ]);
 
   await client.close();
-  // eslint-disable-next-line no-console
   console.log("Database migration complete.");
 };
 
 run().catch((error) => {
-  // eslint-disable-next-line no-console
   console.error("Migration failed:", error);
   process.exit(1);
 });

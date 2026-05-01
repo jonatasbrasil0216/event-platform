@@ -2,6 +2,13 @@
 
 Serverless event platform where organizers create events and attendees browse/register with AI-powered natural-language search.
 
+## Submission checklist (fill before review)
+
+- **GitHub**: public repo URL with this source
+- **Live frontend**: deployed static app URL
+- **Live API**: deployed API base URL (verify `GET /health` returns `{"ok":true}`)
+- Keep the three links below in sync with your deployment
+
 ## Live URLs
 
 - Frontend: _add deployed frontend URL_
@@ -24,7 +31,7 @@ Serverless event platform where organizers create events and attendees browse/re
 ## Prerequisites
 
 - Node.js 20+
-- pnpm 9+
+- pnpm 10+ (see root `packageManager` field for the repo-pinned version)
 - AWS CLI configured (for serverless deployment)
 - MongoDB Atlas cluster/database user
 - OpenAI API key
@@ -41,6 +48,8 @@ OPENAI_API_KEY=...
 VITE_API_BASE_URL=http://localhost:3001
 ```
 
+Optional: set `CORS_ORIGIN` (comma-separated) when the frontend runs on a non-default origin — see `.env.example`.
+
 ## Local Development
 
 ```bash
@@ -52,11 +61,18 @@ This runs backend + frontend in parallel through workspace scripts.
 
 ## Validation Commands
 
+Assessment-style checks (run from repo root):
+
 ```bash
+pnpm install
+pnpm lint
+pnpm lint:fix   # optional: auto-fix where ESLint can
 pnpm test
 pnpm typecheck
 pnpm build
 ```
+
+Per-package TypeScript check (same as `pnpm typecheck`): `pnpm exec tsc --noEmit` inside `packages/frontend`, etc.
 
 ## Architecture Overview
 
@@ -110,12 +126,11 @@ Error envelope:
 
 ## Testing Coverage
 
-Current automated tests (Vitest, backend):
+Vitest suites:
 
-- `validateEnv()` success/failure cases
-- Search helper behavior:
-  - fallback keyword parsing
-  - Mongo filter construction for category/date/capacity
+- **Backend** (`packages/backend`): `validateEnv()`; search parsing / Mongo filter helpers
+- **Shared** (`packages/shared`): published-events query schema (defaults, coercion)
+- **Frontend** (`packages/frontend`): `useIsMobile` hook (matchMedia wiring)
 
 ## Deployment Notes
 

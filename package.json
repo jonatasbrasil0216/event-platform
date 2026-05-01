@@ -7,6 +7,16 @@
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "lint": "eslint packages/shared/src packages/shared/tests packages/backend/src packages/frontend/src",
+    "lint:fix": "eslint packages/shared/src packages/shared/tests packages/backend/src packages/frontend/src --fix"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
+    "typescript-eslint": "^8.59.1"
   }
 }

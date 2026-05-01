@@ -234,7 +234,6 @@ app.get("/auth/me", async (req, res, next) => {
 });
 
 app.use((error: unknown, req: Request, res: Response, _next: NextFunction) => {
-  // eslint-disable-next-line no-console
   console.error(`[API ERROR] ${req.method} ${req.originalUrl}`, {
     message: error instanceof Error ? error.message : "Unknown error",
     stack: error instanceof Error ? error.stack : undefined,
