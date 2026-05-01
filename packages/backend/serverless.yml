@@ -1,20 +1,35 @@
+# AWS Lambda + API Gateway HTTP API via Serverless Framework v3 + serverless-esbuild.
+# We use v3 (not v4) so `deploy`/`package` work without a Serverless Dashboard login.
+# Deploy from this directory after `pnpm install` at repo root (workspace deps resolved).
 service: event-platform-api
-frameworkVersion: "4"
+
+frameworkVersion: "3"
 
 provider:
   name: aws
   runtime: nodejs20.x
   stage: ${opt:stage, 'dev'}
-  region: us-east-1
+  region: ${opt:region, 'us-east-1'}
+  memorySize: 512
+  timeout: 29
   environment:
+    NODE_ENV: production
     MONGODB_URI: ${env:MONGODB_URI}
     JWT_SECRET: ${env:JWT_SECRET}
-    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
+    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
     CORS_ORIGIN: ${env:CORS_ORIGIN, ''}
 
 plugins:
   - serverless-esbuild
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node20
+    platform: node
 
 functions:
   api:
@@ -26,11 +41,3 @@ functions:
       - httpApi:
           path: /
           method: any
-
-custom:
-  esbuild:
-    bundle: true
-    minify: false
-    sourcemap: true
-    target: node20
-    platform: node

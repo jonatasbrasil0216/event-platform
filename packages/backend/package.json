@@ -8,11 +8,13 @@
     "dev": "tsx watch src/local/server.ts",
     "test": "vitest run",
     "db:migrate": "tsx src/scripts/migrate.ts",
-    "db:seed": "tsx src/scripts/seed.ts"
+    "db:seed": "tsx src/scripts/seed.ts",
+    "deploy": "serverless deploy",
+    "package:aws": "serverless package"
   },
   "dependencies": {
     "@event-platform/shared": "workspace:*",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
@@ -23,11 +25,13 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.7.2",
+    "esbuild": "0.25.10",
+    "serverless": "3.40.0",
+    "serverless-esbuild": "1.55.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"

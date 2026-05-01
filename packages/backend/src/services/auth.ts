@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { type Collection, ObjectId } from "mongodb";
 import { loginSchema, signupSchema, type User, type UserRole } from "@event-platform/shared";
 import { getDb } from "../db/client";

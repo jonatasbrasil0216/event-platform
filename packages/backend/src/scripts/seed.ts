@@ -1,5 +1,5 @@
 import "dotenv/config";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { MongoClient, ObjectId } from "mongodb";
 import type { EventCategory, EventStatus, UserRole } from "@event-platform/shared";
 import { getEnv } from "../lib/env";

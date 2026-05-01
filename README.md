@@ -18,15 +18,15 @@ Serverless event platform where organizers create events and attendees browse/re
 ## Tech Stack
 
 - Frontend: React + TypeScript + Vite + TanStack Query + React Router + Zustand + react-hook-form + Zod + Sonner
-- Backend: Node.js + TypeScript + Express (local) + AWS Lambda/API Gateway (target deploy) + MongoDB Atlas
+- Backend: Node.js + TypeScript + Express wrapped with `serverless-http`, deployed as **AWS Lambda** behind **API Gateway HTTP API** (Serverless Framework v3 + `serverless-esbuild`) + MongoDB Atlas
 - AI: OpenAI (`gpt-4o-mini`) structured JSON parsing for search
 - Shared: Workspace package with common types and schemas (`@event-platform/shared`)
 
 ## Monorepo Structure
 
 - `packages/shared`: shared Zod schemas/types for frontend + backend
-- `packages/backend`: API services, auth, events, registrations, search, local Express wrapper
-- `packages/frontend`: responsive UI for auth, browsing, organizer dashboard, registrations
+- **`packages/backend`**: API services, auth, events, registrations, search — see [packages/backend/README.md](packages/backend/README.md)
+- **`packages/frontend`**: responsive UI for auth, browsing, organizer dashboard, registrations — see [packages/frontend/README.md](packages/frontend/README.md)
 
 ## Prerequisites
 
@@ -130,26 +130,80 @@ Vitest suites:
 
 - **Backend** (`packages/backend`): `validateEnv()`; search parsing / Mongo filter helpers
 - **Shared** (`packages/shared`): published-events query schema (defaults, coercion)
-- **Frontend** (`packages/frontend`): `useIsMobile` hook (matchMedia wiring)
+- **Frontend** (`packages/frontend`): API client, event API helpers, `ConfirmDialog`, `useIsMobile`, event form validators
 
 ## Deployment Notes
 
-- Backend deploy target: Serverless Framework -> Lambda + API Gateway
-- Frontend deploy target: AWS Amplify Hosting (or equivalent static hosting)
-- Mongo connection is cached per warm runtime to avoid excess connection churn.
+### Backend (Lambda + API Gateway HTTP API)
+
+The API is the same Express `app` as local dev, exported as a Lambda handler in `packages/backend/src/handlers/api.ts` via `serverless-http`. **Serverless Framework v3** bundles the handler with **`serverless-esbuild`** (see `packages/backend/serverless.yml`). We stay on v3 so `serverless deploy` / `package` work without a Serverless Dashboard login (v4+ requires `serverless login` for the open-source CLI).
+
+1. Install [AWS CLI](https://aws.amazon.com/cli/) and configure credentials (`aws configure` or environment variables).
+2. From the repo root: `pnpm install`.
+3. Export the same secrets the app needs (or load them in your shell from `.env`):
+
+   - `MONGODB_URI`, `JWT_SECRET`, `OPENAI_API_KEY`
+   - Optional: `JWT_EXPIRES_IN` (defaults to `7d` in code and in `serverless.yml`)
+   - **Required for production browsers:** `CORS_ORIGIN` — comma-separated list of frontend origins (e.g. `https://myapp.amplifyapp.com`). If unset, the API only allows `http://localhost:3000`.
+
+4. Deploy:
+
+```bash
+cd packages/backend
+pnpm deploy
+```
+
+5. After deploy, Serverless prints the **HTTP API** base URL. Set your frontend `VITE_API_BASE_URL` (build-time) to that base URL (no trailing slash). Health check: `GET /health` should return `{"ok":true}`.
+
+6. Optional: build the deployment artifact without uploading: `pnpm package:aws` (set the same env vars first so `${env:...}` in `serverless.yml` can resolve).
+
+If pnpm blocks install scripts (`esbuild`, `serverless`), run `pnpm approve-builds` once and allow those packages.
+
+**MongoDB Atlas:** allow connections from AWS Lambda (commonly `0.0.0.0/0` on a dedicated database user for the challenge, or tighter IP / VPC later).
+
+**Password hashing:** the API uses `bcryptjs` (pure JS) so Lambda bundles do not rely on native `bcrypt` binaries.
+
+### Frontend
+
+- AWS Amplify Hosting, S3 + CloudFront, or similar static hosting for the Vite build (`pnpm --filter @event-platform/frontend build`).
+
+### Runtime behavior
+
+- Mongo connection is cached per warm Lambda container to limit connection churn.
 
 ## Troubleshooting
 
 - **Mongo connection fails**: verify Atlas allowlist and connection string credentials.
 - **401 auth errors**: verify JWT secret consistency and `Authorization: Bearer <token>` format.
 - **Search failures**: ensure `OPENAI_API_KEY` is present and valid.
-- **Build works, runtime fails on bcrypt/esbuild**: run `pnpm approve-builds` when prompted by pnpm.
+- **CORS in production**: set `CORS_ORIGIN` on the Lambda environment to your deployed frontend origin(s).
+- **pnpm blocks Serverless postinstall**: if deploy fails, run `pnpm approve-builds` and allow `serverless` if prompted.
 
-## With More Time
+## If we had more time (product & platform)
 
-- Cursor pagination for event lists
-- Rate limiting and abuse protection
-- Rich observability/tracing and structured log correlation
-- VPC + PrivateLink hardening for Atlas connectivity
-- Realtime registration updates
-- Broader unit and integration test coverage
+Ideas beyond the core assessment scope — see also **“What we could do more”** in [packages/frontend/README.md](packages/frontend/README.md) and [packages/backend/README.md](packages/backend/README.md).
+
+### Features users would notice
+
+- **Email flows**: confirmations, reminders, waitlists when events are full, organizer digests.
+- **Event media**: cover images (S3 + presigned uploads), ICS calendar export.
+- **Social & discovery**: sharing links with previews, saved searches, organizer profiles, richer category/tag taxonomy.
+- **Policies**: ticketing tiers, refunds, terms acceptance, GDPR export/delete-me.
+- **Collaboration**: co-organizers, delegated permissions beyond a single organizer per event.
+
+### Reliability & scale
+
+- **Pagination**: stable cursor pagination everywhere lists can grow.
+- **Rate limiting & abuse controls**: API Gateway / WAF, per-IP limits, captcha on auth if needed.
+- **Realtime**: websockets or SSE for registration counts without full reload.
+- **Observability**: structured logs, traces, alerting; error tracking (e.g. Sentry) front and back.
+
+### Security & compliance
+
+- **Secrets**: AWS Secrets Manager / SSM Parameter Store for production; tighter CORS and JWT rotation.
+- **Network**: VPC for Lambda and MongoDB Atlas Private Endpoint (instead of wide IP allowlists).
+- **Audit**: immutable audit trail for cancellations and edits.
+
+### Engineering quality
+
+- **Broader automated tests**: E2E (Playwright), API integration tests against a test Mongo instance, CI running lint/typecheck/test/build on every push.
