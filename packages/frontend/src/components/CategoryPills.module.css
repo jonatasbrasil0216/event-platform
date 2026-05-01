@@ -1,0 +1,36 @@
+.pills {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pills::-webkit-scrollbar {
+  display: none;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: transparent;
+  color: #cad5e8;
+  padding: 0.42rem 0.9rem;
+  font-weight: 600;
+}
+
+.pill.active {
+  background: var(--category-bg, #f5f5f5);
+  color: var(--category-text, #14171f);
+  border-color: color-mix(in srgb, var(--category-color, #fff) 42%, rgba(255, 255, 255, 0.18));
+}
+
+@media (max-width: 767px) {
+  .pills {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}

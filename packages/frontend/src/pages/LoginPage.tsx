@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { loginRequest } from "../api/auth";
 import { useAuthStore } from "../stores/auth";
+import styles from "./auth.module.css";
 
 const schema = loginSchema;
 type FormValues = z.infer<typeof schema>;
@@ -29,19 +30,17 @@ export const LoginPage = () => {
       toast.success("Welcome back!");
       navigate("/");
     },
-    onError: (error) => {
-      toast.error(error.message);
-    }
+    onError: (error) => toast.error(error.message)
   });
 
   return (
-    <main className="auth-page">
-      <section className="auth-card">
+    <main className={styles.page}>
+      <section className={styles.card}>
         <p className="eyebrow">Welcome back</p>
         <h1>Sign in</h1>
-        <p className="auth-copy">Access your dashboard and manage events in seconds.</p>
+        <p className={styles.copy}>Access your dashboard and manage events in seconds.</p>
         <form
-          className="auth-form"
+          className={styles.form}
           onSubmit={form.handleSubmit((values) => loginMutation.mutate(values))}
         >
           <label>
@@ -51,7 +50,7 @@ export const LoginPage = () => {
           </label>
           <label>
             Password
-            <div className="password-field">
+            <div className={styles.passwordField}>
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Your password"
@@ -59,7 +58,7 @@ export const LoginPage = () => {
               />
               <button
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="password-toggle"
+                className={styles.passwordToggle}
                 onClick={() => setShowPassword((prev) => !prev)}
                 type="button"
               >
@@ -72,7 +71,7 @@ export const LoginPage = () => {
             {loginMutation.isPending ? "Signing in..." : "Sign in"}
           </button>
         </form>
-        <p className="auth-footer">
+        <p className={styles.footer}>
           New here? <Link to="/signup">Create an account</Link>
         </p>
       </section>

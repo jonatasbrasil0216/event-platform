@@ -2,8 +2,9 @@ import type { Event } from "@event-platform/shared";
 import { CalendarDays, Ellipsis, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { CategoryChip } from "./CategoryChip";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
+import styles from "./MyEventCard.module.css";
 
 interface MyEventCardProps {
   event: Event;
@@ -41,109 +42,91 @@ export const MyEventCard = ({
   useEffect(() => {
     const onOutsideClick = (event: MouseEvent) => {
       if (!(event.target instanceof Element)) return;
-      if (!menuRef.current?.contains(event.target)) {
-        setMenuOpen(false);
-      }
+      if (!menuRef.current?.contains(event.target)) setMenuOpen(false);
     };
     document.addEventListener("mousedown", onOutsideClick);
-    return () => {
-      document.removeEventListener("mousedown", onOutsideClick);
-    };
+    return () => document.removeEventListener("mousedown", onOutsideClick);
   }, []);
 
   return (
-    <article className="my-events-card">
-      <div className="my-events-main">
-        <div className="my-events-top-row">
-          <span className={`my-reg-category category-chip ${getCategoryToneClass(event.category)}`}>
-            <span className="category-dot" />
-            {getCategoryLabel(event.category)}
-          </span>
-          <div className="my-events-menu-wrap" ref={menuRef}>
-            <button
-              className="my-events-more"
-              disabled={cancelDisabled || republishDisabled || discardDisabled || duplicateDisabled}
-              onClick={() => setMenuOpen((prev) => !prev)}
-              title="More actions"
-              type="button"
-            >
-              <Ellipsis size={16} strokeWidth={2} />
-            </button>
-            {menuOpen && (
-              <div className="my-events-menu">
+    <article className={styles.card}>
+      <div className={styles.topRow}>
+        <CategoryChip category={event.category} />
+        <div className="my-events-menu-wrap" ref={menuRef}>
+          <button
+            className="my-events-more"
+            disabled={cancelDisabled || republishDisabled || discardDisabled || duplicateDisabled}
+            onClick={() => setMenuOpen((prev) => !prev)}
+            title="More actions"
+            type="button"
+          >
+            <Ellipsis size={16} strokeWidth={2} />
+          </button>
+          {menuOpen && (
+            <div className="my-events-menu">
+              <button
+                className="my-events-menu-item"
+                disabled={duplicateDisabled}
+                onClick={() => { setMenuOpen(false); setConfirmAction("duplicate"); }}
+                type="button"
+              >
+                Duplicate Event
+              </button>
+              {event.status === "cancelled" ? (
                 <button
                   className="my-events-menu-item"
-                  disabled={duplicateDisabled}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setConfirmAction("duplicate");
-                  }}
+                  disabled={republishDisabled}
+                  onClick={() => { setMenuOpen(false); setConfirmAction("republish"); }}
                   type="button"
                 >
-                  Duplicate Event
+                  Republish
                 </button>
-                {event.status === "cancelled" ? (
-                  <button
-                    className="my-events-menu-item"
-                    disabled={republishDisabled}
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setConfirmAction("republish");
-                    }}
-                    type="button"
-                  >
-                    Republish
-                  </button>
-                ) : (
-                  <button
-                    className="my-events-menu-item"
-                    disabled={cancelDisabled}
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setConfirmAction("cancel");
-                    }}
-                    type="button"
-                  >
-                    Cancel
-                  </button>
-                )}
+              ) : (
                 <button
-                  className="my-events-menu-item danger"
-                  disabled={discardDisabled}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setConfirmAction("discard");
-                  }}
+                  className="my-events-menu-item"
+                  disabled={cancelDisabled}
+                  onClick={() => { setMenuOpen(false); setConfirmAction("cancel"); }}
                   type="button"
                 >
-                  Discard
+                  Cancel
                 </button>
-              </div>
-            )}
-          </div>
-        </div>
-        <h3>{event.name}</h3>
-        <p className="my-events-mobile-meta">
-          <CalendarDays size={14} strokeWidth={1.8} />
-          {new Date(event.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {timeLabel}
-        </p>
-        <p className="my-events-mobile-meta">
-          <MapPin size={14} strokeWidth={1.8} />
-          {event.location}
-        </p>
-        <div className="my-events-registrations-row">
-          <p className="my-events-col-label">Registrations</p>
-          <p className={`my-events-capacity ${warn ? "warn" : ""}`}>
-            {event.registeredCount}/{event.capacity}
-            {warn ? " · almost full" : ""}
-          </p>
-        </div>
-        <div className="progress-track event-card-progress">
-          <div className={`progress-fill ${warn ? "warn" : ""}`} style={{ width: `${Math.min(ratio * 100, 100)}%` }} />
+              )}
+              <button
+                className="my-events-menu-item danger"
+                disabled={discardDisabled}
+                onClick={() => { setMenuOpen(false); setConfirmAction("discard"); }}
+                type="button"
+              >
+                Discard
+              </button>
+            </div>
+          )}
         </div>
       </div>
+      <h3>{event.name}</h3>
+      <p className="my-events-mobile-meta">
+        <CalendarDays size={14} strokeWidth={1.8} />
+        {new Date(event.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {timeLabel}
+      </p>
+      <p className="my-events-mobile-meta">
+        <MapPin size={14} strokeWidth={1.8} />
+        {event.location}
+      </p>
+      <div className="my-events-registrations-row">
+        <p className="my-events-col-label">Registrations</p>
+        <p className={`my-events-capacity ${warn ? "warn" : ""}`}>
+          {event.registeredCount}/{event.capacity}
+          {warn ? " · almost full" : ""}
+        </p>
+      </div>
+      <div className="progress-track event-card-progress">
+        <div
+          className={`progress-fill ${warn ? "warn" : ""}`}
+          style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+        />
+      </div>
 
-      <div className="my-events-actions">
+      <div className={styles.actions}>
         <Link className="btn btn-secondary" to={`/events/${event._id}`}>
           View
         </Link>
@@ -168,7 +151,7 @@ export const MyEventCard = ({
               ? "Cancel Event"
               : confirmAction === "republish"
                 ? "Republish Event"
-              : "Discard Event"
+                : "Discard Event"
         }
         danger={confirmAction === "discard"}
         message={
@@ -178,19 +161,14 @@ export const MyEventCard = ({
               ? "This will cancel the event and move it to Cancelled."
               : confirmAction === "republish"
                 ? "This will move the event back to Published."
-              : "This action permanently removes the event and cannot be undone."
+                : "This action permanently removes the event and cannot be undone."
         }
         onClose={() => setConfirmAction(null)}
         onConfirm={() => {
-          if (confirmAction === "duplicate") {
-            onDuplicate(event);
-          } else if (confirmAction === "cancel") {
-            onCancel(event._id);
-          } else if (confirmAction === "republish") {
-            onRepublish(event._id);
-          } else if (confirmAction === "discard") {
-            onDiscard(event._id);
-          }
+          if (confirmAction === "duplicate") onDuplicate(event);
+          else if (confirmAction === "cancel") onCancel(event._id);
+          else if (confirmAction === "republish") onRepublish(event._id);
+          else if (confirmAction === "discard") onDiscard(event._id);
           setConfirmAction(null);
         }}
         open={Boolean(confirmAction)}
@@ -201,7 +179,7 @@ export const MyEventCard = ({
               ? "Cancel event?"
               : confirmAction === "republish"
                 ? "Republish event?"
-              : "Discard event?"
+                : "Discard event?"
         }
       />
     </article>

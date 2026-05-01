@@ -1,0 +1,139 @@
+.topNav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(7, 10, 20, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.mobileNavRow,
+.desktopNavRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.desktopNavRow {
+  display: none;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.brandCentered {
+  margin-inline: auto;
+}
+
+.iconBtn {
+  border: none;
+  background: transparent;
+  color: #e6edf6;
+  padding: 0.25rem;
+}
+
+.avatarBtn {
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #1f4b87;
+  color: #dce7fa;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.avatarMenuWrap {
+  position: relative;
+}
+
+.avatarMenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 140px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(18, 24, 40, 0.98);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  padding: 0.35rem;
+  z-index: 30;
+}
+
+.avatarMenuItem {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #dce7fa;
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+}
+
+.avatarMenuItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navLinks {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.navLinks a {
+  color: #d8deeb;
+}
+
+.mobileDrawer {
+  width: 100%;
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.mobileDrawer a,
+.drawerLogout {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.drawerLogout {
+  color: #dbe3f2;
+  text-align: left;
+}
+
+@media (min-width: 768px) {
+  .topNav {
+    padding: 0.95rem 1.5rem;
+  }
+
+  .mobileNavRow,
+  .mobileDrawer {
+    display: none;
+  }
+
+  .desktopNavRow {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .desktopNavRow .navLinks {
+    margin-left: auto;
+    margin-right: 1rem;
+  }
+
+  .desktopNavRow .navLinks a {
+    border-bottom: 2px solid transparent;
+    padding-bottom: 0.2rem;
+  }
+
+  .desktopNavRow .navLinks a:hover {
+    border-bottom-color: rgba(255, 255, 255, 0.8);
+  }
+}

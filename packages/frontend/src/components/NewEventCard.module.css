@@ -1,0 +1,36 @@
+.card {
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  background: rgba(24, 27, 35, 0.4);
+  min-height: 270px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+.icon {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 0.8rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #eceff7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 1.55rem;
+  color: #dfe6f4;
+}
+
+.card p {
+  margin: 0.45rem 0 0;
+  color: #9fafc5;
+  font-weight: 600;
+  max-width: 24ch;
+}

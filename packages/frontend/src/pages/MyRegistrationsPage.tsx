@@ -1,21 +1,37 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { cancelRegistrationRequest, listMyRegistrationsRequest } from "../api/registrations";
 import { LoadingBlocks } from "../components/LoadingBlocks";
 import { MyRegistrationCard } from "../components/MyRegistrationCard";
+import { PaginationControls } from "../components/PaginationControls";
 import { SegmentedCountTabs } from "../components/SegmentedCountTabs";
 import { useAuthStore } from "../stores/auth";
+import styles from "./MyRegistrationsPage.module.css";
 
 export const MyRegistrationsPage = () => {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+  const [page, setPage] = useState(1);
+  const [cursorByPage, setCursorByPage] = useState<Record<number, string | undefined>>({ 1: undefined });
+
   const regsQuery = useQuery({
-    queryKey: ["my-registrations"],
-    queryFn: listMyRegistrationsRequest,
+    queryKey: ["my-registrations", activeTab, cursorByPage[page]],
+    queryFn: () => listMyRegistrationsRequest({ bucket: activeTab, cursor: cursorByPage[page], limit: 6 }),
     enabled: user?.role === "attendee"
   });
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+
+  useEffect(() => {
+    const nextCursor = regsQuery.data?.pageInfo.nextCursor;
+    if (!nextCursor) return;
+    setCursorByPage((current) => ({ ...current, [page + 1]: nextCursor }));
+  }, [regsQuery.data?.pageInfo.nextCursor, page]);
+
+  const resetPaging = () => {
+    setPage(1);
+    setCursorByPage({ 1: undefined });
+  };
 
   const cancelMutation = useMutation({
     mutationFn: cancelRegistrationRequest,
@@ -37,16 +53,13 @@ export const MyRegistrationsPage = () => {
     );
   }
 
-  const activeRegistrations =
-    regsQuery.data?.data.filter(({ registration }) => registration.status === "active") ?? [];
-  const now = Date.now();
-  const upcomingRegs = activeRegistrations.filter(({ event }) => new Date(event.date).getTime() >= now);
-  const pastRegs = activeRegistrations.filter(({ event }) => new Date(event.date).getTime() < now);
-  const visibleRegs = activeTab === "upcoming" ? upcomingRegs : pastRegs;
+  const counts = regsQuery.data?.counts ?? { upcoming: 0, past: 0 };
+  const visibleRegs = regsQuery.data?.data ?? [];
+  const pageCount = regsQuery.data?.pageInfo.hasNextPage ? page + 1 : page;
 
   return (
-    <main className="container my-reg-page">
-      <section className="my-reg-header">
+    <main className={`container ${styles.page}`}>
+      <section className={styles.header}>
         <h1>My registrations</h1>
         <p>Events you've signed up for.</p>
       </section>
@@ -62,18 +75,18 @@ export const MyRegistrationsPage = () => {
           <SegmentedCountTabs
             activeId={activeTab}
             ariaLabel="Registration timeline tabs"
-            className="my-reg-tabs"
+            className={styles.tabs}
             items={[
-              { id: "upcoming", label: "Upcoming", count: upcomingRegs.length },
-              { id: "past", label: "Past", count: pastRegs.length }
+              { id: "upcoming", label: "Upcoming", count: counts.upcoming },
+              { id: "past", label: "Past", count: counts.past }
             ]}
-            onChange={setActiveTab}
+            onChange={(value) => {
+              setActiveTab(value);
+              resetPaging();
+            }}
           />
-
-          <p className="my-reg-count-label">{`${visibleRegs.length} ${activeTab} events`}</p>
-
           {visibleRegs.length ? (
-            <section className="my-reg-grid">
+            <section className={styles.grid}>
               {visibleRegs.map(({ registration, event, organizerName }) => (
                 <MyRegistrationCard
                   cancelDisabled={cancelMutation.isPending}
@@ -85,10 +98,15 @@ export const MyRegistrationsPage = () => {
               ))}
             </section>
           ) : (
-            <article className="panel">
+            <article className={`panel ${styles.emptyState}`}>
               <h3>{activeTab === "upcoming" ? "No upcoming registrations" : "No past registrations"}</h3>
               <p>Browse events and register to build your schedule.</p>
             </article>
+          )}
+          {pageCount > 1 && (
+            <div className={styles.listPagination}>
+              <PaginationControls onPageChange={setPage} page={page} pageCount={pageCount} />
+            </div>
           )}
         </section>
       )}

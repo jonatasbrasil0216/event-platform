@@ -7,10 +7,17 @@ import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
-import { createEventRequest, getEventRequest, makeEventDraftRequest, updateEventRequest } from "../api/events";
+import {
+  createEventRequest,
+  getEventRequest,
+  makeEventDraftRequest,
+  republishEventRequest,
+  updateEventRequest
+} from "../api/events";
 import { MarkdownEditorField } from "../components/MarkdownEditorField";
 import { useAuthStore } from "../stores/auth";
 import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
+import styles from "./EventFormPage.module.css";
 
 const localDateTimeSchema = z
   .string()
@@ -26,22 +33,14 @@ const stripMarkdown = (value: string) =>
     .trim();
 
 const schema = createEventSchema.extend({
-  name: z
-    .string()
-    .trim()
-    .min(3, "Event name must be at least 3 characters")
-    .max(100, "Event name must be at most 100 characters"),
+  name: z.string().trim().min(3, "Event name must be at least 3 characters").max(100, "Event name must be at most 100 characters"),
   description: z
     .string()
     .trim()
     .min(10, "Description must be at least 10 characters")
     .max(2000, "Description must be at most 2000 characters")
     .refine((value) => stripMarkdown(value).length >= 10, "Description must include at least 10 readable characters"),
-  location: z
-    .string()
-    .trim()
-    .min(2, "Location must be at least 2 characters")
-    .max(200, "Location must be at most 200 characters"),
+  location: z.string().trim().min(2, "Location must be at least 2 characters").max(200, "Location must be at most 200 characters"),
   date: localDateTimeSchema
 });
 type FormValues = z.infer<typeof schema>;
@@ -74,14 +73,7 @@ export const EventFormPage = () => {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      name: "",
-      description: "",
-      category: "tech",
-      date: "",
-      location: "",
-      capacity: 50
-    }
+    defaultValues: { name: "", description: "", category: "tech", date: "", location: "", capacity: 50 }
   });
   const selectedCategory = form.watch("category");
 
@@ -127,20 +119,15 @@ export const EventFormPage = () => {
         date: new Date(values.date).toISOString()
       };
       const saved = isEdit ? await updateEventRequest(id!, payload) : await createEventRequest(payload);
-      if (submitIntent === "draft") {
-        return makeEventDraftRequest(saved.event._id);
-      }
+      if (submitIntent === "draft") return makeEventDraftRequest(saved.event._id);
+      if (isEdit) return republishEventRequest(saved.event._id);
       return saved;
     },
     onSuccess: () => {
       toast.success(
         submitIntent === "draft"
-          ? isEdit
-            ? "Draft saved"
-            : "Event created as draft"
-          : isEdit
-            ? "Event updated"
-            : "Event created"
+          ? isEdit ? "Draft saved" : "Event created as draft"
+          : isEdit ? "Event updated" : "Event created"
       );
       navigate("/organizer/events");
     },
@@ -159,18 +146,16 @@ export const EventFormPage = () => {
   }
 
   return (
-    <main className="container event-form-page">
-      <Link className="back-link event-form-back" to="/organizer/events">
+    <main className={`container ${styles.page}`}>
+      <Link className={`back-link ${styles.back}`} to="/organizer/events">
         ← Back to my events
       </Link>
-      <header className="event-form-header">
+      <header className={styles.header}>
         <div>
           <h1>{isEdit ? "Edit event" : "Create event"}</h1>
-          <p>
-            Save as a draft to keep editing, or publish to make it visible to attendees.
-          </p>
+          <p>Save as a draft to keep editing, or publish to make it visible to attendees.</p>
         </div>
-        <div className="event-form-actions">
+        <div className={styles.headerActions}>
           <button className="btn btn-ghost" onClick={() => navigate("/organizer/events")} type="button">
             Cancel
           </button>
@@ -195,7 +180,7 @@ export const EventFormPage = () => {
         </div>
       </header>
 
-      <form className="event-form" id="event-form" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+      <form className={styles.form} id="event-form" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
         <input
           {...form.register("date", {
             validate: (value) =>
@@ -204,20 +189,20 @@ export const EventFormPage = () => {
           type="hidden"
         />
 
-        <section className="panel event-form-section">
+        <section className={`panel ${styles.section}`}>
           <h2>Basic details</h2>
-          <p className="event-form-section-sub">Name, description, and category for your event.</p>
+          <p className={styles.sectionSub}>Name, description, and category for your event.</p>
 
-          <label className="event-form-label">
+          <label className={styles.label}>
             Event name
             <input {...form.register("name")} maxLength={100} placeholder="Building serverless apps with TypeScript" type="text" />
-            <div className="event-form-caption-row">
-              <span className="event-form-caption">3-100 characters</span>
+            <div className={styles.captionRow}>
+              <span className={styles.caption}>3–100 characters</span>
               <span className="field-error">{form.formState.errors.name?.message ?? ""}</span>
             </div>
           </label>
 
-          <div className="event-form-label">
+          <div className={styles.label}>
             <span>Description</span>
             <Controller
               control={form.control}
@@ -231,61 +216,60 @@ export const EventFormPage = () => {
                 />
               )}
             />
-            <div className="event-form-caption-row">
-              <span className="event-form-caption">10-2000 characters</span>
-              <span className="event-form-caption">{`${form.watch("description")?.length ?? 0} / 2000`}</span>
+            <div className={styles.captionRow}>
+              <span className={styles.caption}>10–2000 characters</span>
+              <span className={styles.caption}>{`${form.watch("description")?.length ?? 0} / 2000`}</span>
             </div>
             <span className="field-error">{form.formState.errors.description?.message ?? ""}</span>
           </div>
 
-          <label className="event-form-label">
+          <label className={styles.label}>
             Category
-            <div className={`event-form-input-icon-wrap ${getCategoryToneClass(selectedCategory)}`}>
-              <span className="event-form-leading-dot" />
-              <select {...form.register("category")} className="event-form-with-leading-dot">
+            <div className={`${styles.inputIconWrap} ${getCategoryToneClass(selectedCategory)}`}>
+              <span className={styles.leadingDot} />
+              <select {...form.register("category")} className={styles.withLeadingDot}>
                 {categories.map((category) => (
                   <option key={category} value={category}>
                     {getCategoryLabel(category)}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="event-form-input-icon event-form-select-icon" size={15} strokeWidth={1.8} />
+              <ChevronDown className={`${styles.inputIcon} ${styles.selectIcon}`} size={15} strokeWidth={1.8} />
             </div>
           </label>
         </section>
 
-        <section className="panel event-form-section">
+        <section className={`panel ${styles.section}`}>
           <h2>When & where</h2>
-          <p className="event-form-section-sub">When the event happens and where attendees should go.</p>
-          <div className="event-form-date-time-grid">
-            <label className="event-form-label">
+          <p className={styles.sectionSub}>When the event happens and where attendees should go.</p>
+          <div className={styles.dateTimeGrid}>
+            <label className={styles.label}>
               Date
-              <input onChange={(changeEvent) => setDateValue(changeEvent.target.value)} type="date" value={dateValue} />
+              <input onChange={(e) => setDateValue(e.target.value)} type="date" value={dateValue} />
             </label>
-            <label className="event-form-label">
+            <label className={styles.label}>
               Time
-              <input onChange={(changeEvent) => setTimeValue(changeEvent.target.value)} type="time" value={timeValue} />
+              <input onChange={(e) => setTimeValue(e.target.value)} type="time" value={timeValue} />
             </label>
           </div>
           <span className="field-error">{form.formState.errors.date?.message ?? ""}</span>
 
-          <label className="event-form-label">
+          <label className={styles.label}>
             Location
-            <div className="event-form-input-icon-wrap">
+            <div className={styles.inputIconWrap}>
               <input {...form.register("location")} placeholder="Industry City, Brooklyn, NY" type="text" />
-              <MapPin className="event-form-input-icon" size={15} strokeWidth={1.8} />
+              <MapPin className={styles.inputIcon} size={15} strokeWidth={1.8} />
             </div>
-            <span className="event-form-caption">Address or venue name</span>
+            <span className={styles.caption}>Address or venue name</span>
             <span className="field-error">{form.formState.errors.location?.message ?? ""}</span>
           </label>
         </section>
 
-        <section className="panel event-form-section">
+        <section className={`panel ${styles.section}`}>
           <h2>Capacity</h2>
-          <p className="event-form-section-sub">How many people can register for this event.</p>
-
-          <div className="event-form-capacity-row">
-            <label className="event-form-label">
+          <p className={styles.sectionSub}>How many people can register for this event.</p>
+          <div className={styles.capacityRow}>
+            <label className={styles.label}>
               Maximum attendees
               <input
                 {...form.register("capacity", {
@@ -297,8 +281,11 @@ export const EventFormPage = () => {
                 type="number"
               />
             </label>
-            <p className="event-form-capacity-hint">You can change this later, but never below the current registration count.</p>
+            <p className={styles.capacityHint}>
+              You can change this later, but never below the current registration count.
+            </p>
           </div>
+          <span className="field-error">{form.formState.errors.capacity?.message ?? ""}</span>
         </section>
       </form>
     </main>

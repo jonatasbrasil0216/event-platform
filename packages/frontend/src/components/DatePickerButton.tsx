@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import styles from "./DatePickerButton.module.css";
 
 interface DatePickerButtonProps {
   value: string;
@@ -32,12 +33,12 @@ export const DatePickerButton = ({ value, onChange }: DatePickerButtonProps) => 
   };
 
   return (
-    <div className="date-filter-wrap">
-      <button className="date-filter-btn" onClick={handleButtonClick} type="button">
+    <div className={styles.wrap}>
+      <button className={styles.btn} onClick={handleButtonClick} type="button">
         {label}
       </button>
       <input
-        className="date-anchor-input"
+        className={styles.anchorInput}
         onChange={(event) => onChange(event.target.value)}
         ref={inputRef}
         tabIndex={-1}

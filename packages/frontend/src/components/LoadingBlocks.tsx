@@ -1,8 +1,10 @@
+import styles from "./LoadingBlocks.module.css";
+
 export const LoadingBlocks = ({ count = 3 }: { count?: number }) => {
   return (
-    <section className="loading-list" aria-label="Loading">
+    <section className={styles.list} aria-label="Loading">
       {Array.from({ length: count }).map((_, index) => (
-        <div className="loading-block" key={index} />
+        <div className={styles.block} key={index} />
       ))}
     </section>
   );

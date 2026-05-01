@@ -1,0 +1,34 @@
+.root {
+  align-self: flex-start;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.22rem 0.58rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.25;
+  background: var(--category-bg, rgba(255, 255, 255, 0.08));
+  color: var(--category-text, #dce7fa);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--category-color, #9fafc5);
+  flex-shrink: 0;
+}
+
+.minimal {
+  align-self: auto;
+  padding: 0;
+  border-radius: 0;
+  background: transparent !important;
+  color: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+}

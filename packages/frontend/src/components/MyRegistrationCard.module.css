@@ -1,0 +1,47 @@
+.card {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(24, 27, 35, 0.8);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+.card h3 {
+  margin: 0.65rem 0 0.75rem;
+  line-height: 1.2;
+  font-size: 1.04rem;
+}
+
+.meta {
+  margin: 0 0 0.42rem;
+  color: #cbd5e6;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.host {
+  margin-top: 0.15rem;
+}
+
+.hostName {
+  margin: 0;
+  color: #e8edf6;
+  font-weight: 700;
+}
+
+.actions {
+  margin-top: auto;
+  padding-top: 0.9rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.cancelBtn {
+  color: #ff7f7f;
+}

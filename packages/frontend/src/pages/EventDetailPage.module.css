@@ -1,0 +1,487 @@
+/* ─── Attendee detail view ──────────────────────────────────────── */
+.detailPage {
+  padding-bottom: 5.25rem;
+}
+
+.mobileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+  padding: 0.75rem 0.85rem;
+  background: rgba(20, 23, 31, 0.72);
+}
+
+.mobileHeader h2 {
+  margin: 0;
+  font-size: 1.55rem;
+}
+
+.mobileBack {
+  position: absolute;
+  left: 0.75rem;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #dce4f3;
+}
+
+.layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.main {
+  padding: 1.35rem;
+}
+
+.side {
+  height: fit-content;
+  padding: 1.15rem;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.categoryChip {
+  align-self: flex-start;
+}
+
+.main h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 0.5rem 0 1rem;
+  line-height: 1.1;
+}
+
+.metaGrid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+}
+
+.metaEntry {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  column-gap: 0.45rem;
+}
+
+.metaIcon {
+  color: #9dabc2;
+  margin-top: 0.12rem;
+}
+
+.metaContent {
+  display: grid;
+}
+
+.metaLabelText {
+  color: #9dabc2;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metaValue {
+  margin: 0.2rem 0 0.1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f0f3fa;
+}
+
+.metaSub {
+  margin: 0;
+  color: #cad4e7;
+  font-weight: 600;
+}
+
+.spotsCopy {
+  margin: 0 0 0.7rem;
+  color: #ecf0f8;
+  font-size: 1.95rem;
+  font-weight: 700;
+}
+
+.spotsInlineRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.spotsInlineCopy {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.spotsInlineTrack {
+  flex: 1;
+  min-width: 90px;
+}
+
+.spotsActionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.spotsActionRow .spotsInlineRow {
+  flex: 1;
+  min-width: 0;
+}
+
+.spotsActionBtn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.cta {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.aboutMarkdown {
+  margin-top: 0.15rem;
+}
+
+/* Host appears in .side on desktop; only show this block below “About” when sidebar is hidden (mobile). */
+.mainHostBelowAbout {
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .mainHostBelowAbout {
+    display: none;
+  }
+}
+
+.mobileActionBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(13, 18, 32, 0.98);
+  z-index: 40;
+}
+
+.mobileActionBar > div {
+  flex: 1;
+}
+
+/* ─── Organizer detail view ─────────────────────────────────────── */
+.orgPage {
+  padding-bottom: 1rem;
+}
+
+.orgTop {
+  margin-bottom: 0.5rem;
+}
+
+.orgMobileTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.orgMobileBackLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #dce4f3;
+  font-weight: 700;
+}
+
+.orgMobileBackLink svg {
+  flex-shrink: 0;
+}
+
+.orgMobileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+  padding: 0.75rem 0.85rem;
+  background: rgba(20, 23, 31, 0.72);
+}
+
+.orgMobileHeader h2 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+
+.orgTitleRow h1 {
+  margin: 0.5rem 0 0.7rem;
+  font-size: clamp(2.2rem, 4.2vw, 3.3rem);
+  line-height: 1.05;
+}
+
+.orgTitleMeta {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.orgPublishedDot {
+  color: #26c39c;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.orgPublishedDot.muted {
+  color: #b9c3d4;
+}
+
+.orgLayout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.orgLeft {
+  display: grid;
+  gap: 1rem;
+}
+
+.orgActions {
+  display: flex !important;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+
+.orgActions :global(.my-events-menu-wrap) {
+  display: flex;
+}
+
+.orgEditBtn {
+  min-height: 38px;
+  padding: 0 0.85rem;
+  white-space: nowrap;
+}
+
+.orgMoreBtn {
+  width: 38px;
+  height: 100%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #c5d1e3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.orgRegPanel {
+  background: rgba(11, 14, 24, 0.45);
+  padding: 0.95rem;
+}
+
+.orgRegCount {
+  margin: 0.25rem 0 0.35rem;
+  font-size: 2.1rem;
+  line-height: 1;
+}
+
+.orgRegSub {
+  margin: 0.28rem 0 0.75rem;
+  color: #c4cfdf;
+  font-weight: 600;
+}
+
+.orgRegGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.65rem;
+}
+
+.orgMetric {
+  margin: 0.2rem 0 0;
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.orgAboutPanel h3 {
+  margin: 0;
+}
+
+.gridTwo {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 767px) {
+  .main h1 {
+    font-size: 2.15rem;
+    margin: 0.45rem 0 0.9rem;
+  }
+
+  .top :global(.back-link) {
+    display: none;
+  }
+
+  .metaGrid {
+    gap: 0.6rem;
+  }
+
+  .metaEntry {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .metaContent {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  .metaLabelText {
+    display: none;
+  }
+
+  .metaIcon {
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+
+  .metaValue {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.25;
+  }
+
+  .metaSub {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.25;
+    color: #cbd5e6;
+  }
+
+  .metaEntry .metaSub::before {
+    content: "\00b7";
+    margin-right: 0.35rem;
+    color: #9fafc7;
+  }
+
+  .metaEntry .metaValue,
+  .metaEntry .metaSub {
+    white-space: nowrap;
+  }
+
+  .side {
+    display: none;
+  }
+
+  .layout .main {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  .orgTop :global(.back-link) {
+    display: none;
+  }
+
+  .orgMobileHeader {
+    display: flex;
+  }
+}
+
+@media (min-width: 768px) {
+  .layout {
+    grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+    align-items: start;
+  }
+
+  .side {
+    position: sticky;
+    top: 84px;
+    display: block;
+  }
+
+  .metaGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .main {
+    padding: 1.55rem;
+  }
+
+  .side {
+    padding: 1.25rem;
+  }
+
+  .mobileActionBar {
+    display: none;
+  }
+
+  .detailPage {
+    padding-bottom: 1rem;
+  }
+
+  .mobileHeader {
+    display: none;
+  }
+
+  .orgMobileHeader {
+    display: none;
+  }
+
+  .orgTop :global(.back-link) {
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  .orgTitleRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.85rem;
+    align-items: flex-start;
+  }
+
+  .orgLayout {
+    grid-template-columns: minmax(280px, 1fr) minmax(0, 1.5fr);
+    align-items: start;
+  }
+
+  .orgLeft {
+    gap: 0.8rem;
+  }
+
+  .gridTwo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .orgMoreBtn {
+    width: 42px;
+    height: 42px;
+  }
+}

@@ -1,7 +1,8 @@
 import type { Event } from "@event-platform/shared";
 import { CalendarDays, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
+import { CategoryChip } from "./CategoryChip";
+import styles from "./MyRegistrationCard.module.css";
 
 interface MyRegistrationCardProps {
   event: Event;
@@ -16,7 +17,6 @@ export const MyRegistrationCard = ({
   cancelDisabled,
   onCancel
 }: MyRegistrationCardProps) => {
-  const categoryLabel = getCategoryLabel(event.category);
   const hostInitials = organizerName
     .split(" ")
     .map((part) => part[0]?.toUpperCase())
@@ -24,39 +24,37 @@ export const MyRegistrationCard = ({
     .slice(0, 2);
 
   return (
-    <article className="my-reg-card">
-      <span className={`my-reg-category category-chip ${getCategoryToneClass(event.category)}`}>
-        <span className="category-dot" />
-        {categoryLabel}
-      </span>
+    <article className={styles.card}>
+      <CategoryChip category={event.category} />
       <h3>{event.name}</h3>
-      <p className="my-reg-meta">
+      <p className={styles.meta}>
         <CalendarDays size={14} strokeWidth={1.8} />
         {new Date(event.date).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric"
         })}{" "}
-        · {new Date(event.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+        •{" "}
+        {new Date(event.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
       </p>
-      <p className="my-reg-meta">
+      <p className={styles.meta}>
         <MapPin size={14} strokeWidth={1.8} />
         {event.location}
       </p>
       <div className="divider" />
-      <div className="host-row my-reg-host">
+      <div className={`host-row ${styles.host}`}>
         <span className="host-avatar">{hostInitials}</span>
         <div>
           <p className="host-label">Hosted by</p>
-          <p className="my-reg-host-name">{organizerName}</p>
+          <p className={styles.hostName}>{organizerName}</p>
         </div>
       </div>
-      <div className="my-reg-actions">
+      <div className={styles.actions}>
         <Link className="btn btn-secondary" to={`/events/${event._id}`}>
           View details
         </Link>
         <button
-          className="btn btn-secondary my-reg-cancel"
+          className={`btn btn-secondary ${styles.cancelBtn}`}
           disabled={cancelDisabled}
           onClick={() => onCancel(event._id)}
           type="button"

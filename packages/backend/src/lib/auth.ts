@@ -1,6 +1,6 @@
 import type { Request } from "express";
 import { ObjectId } from "mongodb";
-import { unauthorizedError } from "./errors";
+import { forbiddenError, unauthorizedError } from "./errors";
 import { verifyAuthToken } from "./jwt";
 
 export interface AuthContext {
@@ -21,4 +21,11 @@ export const requireAuth = (req: Request): AuthContext => {
     userId: new ObjectId(payload.sub),
     role: payload.role
   };
+};
+
+export const requireRole = (auth: AuthContext, role: "organizer" | "attendee"): void => {
+  if (auth.role !== role) {
+    const label = role.charAt(0).toUpperCase() + role.slice(1);
+    throw forbiddenError(`${label} access required`);
+  }
 };

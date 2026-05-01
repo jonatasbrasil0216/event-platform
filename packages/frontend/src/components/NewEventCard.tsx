@@ -1,10 +1,11 @@
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
+import styles from "./NewEventCard.module.css";
 
 export const NewEventCard = () => {
   return (
-    <Link className="my-events-add-card only-desktop" to="/events/new">
-      <span className="my-events-add-icon">
+    <Link className={`${styles.card} only-desktop`} to="/events/new">
+      <span className={styles.icon}>
         <Plus size={24} strokeWidth={2.1} />
       </span>
       <h3>Create new event</h3>

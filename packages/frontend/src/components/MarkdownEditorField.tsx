@@ -1,12 +1,19 @@
 import {
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
+  CodeToggle,
   CreateLink,
+  DiffSourceToggleWrapper,
+  InsertCodeBlock,
   ListsToggle,
   MDXEditor,
   type MDXEditorMethods,
   Separator,
+  codeBlockPlugin,
+  codeMirrorPlugin,
+  diffSourcePlugin,
   headingsPlugin,
+  linkDialogPlugin,
   linkPlugin,
   listsPlugin,
   markdownShortcutPlugin,
@@ -16,6 +23,8 @@ import {
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import { useEffect, useRef } from "react";
+import { useIsMobile } from "../hooks/useIsMobile";
+import styles from "./MarkdownEditorField.module.css";
 
 interface MarkdownEditorFieldProps {
   value: string;
@@ -34,6 +43,7 @@ export const MarkdownEditorField = ({
 }: MarkdownEditorFieldProps) => {
   const editorRef = useRef<MDXEditorMethods | null>(null);
   const lastSyncedValueRef = useRef(value);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (value === lastSyncedValueRef.current) return;
@@ -42,9 +52,12 @@ export const MarkdownEditorField = ({
   }, [value]);
 
   return (
-    <div className="event-form-md-editor" style={{ "--md-editor-height": `${height}px` } as { [key: string]: string }}>
+    <div
+      className={styles.mdEditor}
+      style={{ "--md-editor-height": `${height}px` } as { [key: string]: string }}
+    >
       <MDXEditor
-        contentEditableClassName="event-form-mdx-content"
+        contentEditableClassName={styles.mdxContent}
         markdown={value}
         onChange={(nextValue) => {
           const limitedValue = nextValue.slice(0, maxLength);
@@ -57,17 +70,47 @@ export const MarkdownEditorField = ({
           listsPlugin(),
           quotePlugin(),
           thematicBreakPlugin(),
+          codeBlockPlugin({ defaultCodeBlockLanguage: "text" }),
+          codeMirrorPlugin({
+            codeBlockLanguages: {
+              text: "Plain text",
+              js: "JavaScript",
+              jsx: "JSX",
+              ts: "TypeScript",
+              tsx: "TSX",
+              json: "JSON",
+              css: "CSS",
+              html: "HTML",
+              bash: "Bash"
+            }
+          }),
           linkPlugin(),
+          linkDialogPlugin(),
+          diffSourcePlugin({ viewMode: "rich-text", diffMarkdown: "" }),
           markdownShortcutPlugin(),
           toolbarPlugin({
             toolbarContents: () => (
               <>
-                <BoldItalicUnderlineToggles />
-                <Separator />
-                <BlockTypeSelect />
-                <ListsToggle />
-                <Separator />
-                <CreateLink />
+                <DiffSourceToggleWrapper
+                  options={["rich-text", "source"]}
+                  SourceToolbar={<div className={styles.sourceModeLabel}>Source mode</div>}
+                >
+                  <>
+                    <BoldItalicUnderlineToggles />
+                    <CodeToggle />
+                    <Separator />
+                    <BlockTypeSelect />
+                    {!isMobile && (
+                      <>
+                        <ListsToggle />
+                        <Separator />
+                        <InsertCodeBlock />
+                        <Separator />
+                        <CreateLink />
+                      </>
+                    )}
+                  </>
+                </DiffSourceToggleWrapper>
               </>
             )
           })

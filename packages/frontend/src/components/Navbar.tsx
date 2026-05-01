@@ -2,6 +2,7 @@ import type { User } from "@event-platform/shared";
 import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 import { Link } from "react-router-dom";
+import styles from "./Navbar.module.css";
 
 interface NavbarProps {
   user: User | null;
@@ -21,36 +22,33 @@ export const Navbar = ({ user, onLogout }: NavbarProps) => {
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       if (!(event.target instanceof Element)) return;
-      if (!event.target.closest(".avatar-menu-wrap")) {
+      if (!event.target.closest(`.${styles.avatarMenuWrap}`)) {
         setAvatarMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleOutsideClick);
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   return (
-    <header className={`top-nav ${user ? "auth-nav" : ""}`}>
+    <header className={styles.topNav}>
       {user ? (
         <>
-          <div className="mobile-nav-row">
+          <div className={styles.mobileNavRow}>
             <button
               aria-label="Open menu"
-              className="icon-btn only-mobile"
+              className={`${styles.iconBtn} only-mobile`}
               onClick={() => setMenuOpen((prev) => !prev)}
               type="button"
             >
               <Menu size={20} strokeWidth={1.8} />
             </button>
-            <Link className="brand brand-centered" to="/">
+            <Link className={`${styles.brand} ${styles.brandCentered}`} to="/">
               EventHub
             </Link>
-            <div className="avatar-menu-wrap">
+            <div className={styles.avatarMenuWrap}>
               <button
-                className="avatar-btn"
+                className={styles.avatarBtn}
                 onClick={() => setAvatarMenuOpen((prev) => !prev)}
                 title="Open user menu"
                 type="button"
@@ -58,26 +56,26 @@ export const Navbar = ({ user, onLogout }: NavbarProps) => {
                 {initials}
               </button>
               {avatarMenuOpen && (
-                <div className="avatar-menu">
-                  <button className="avatar-menu-item" onClick={onLogout} type="button">
+                <div className={styles.avatarMenu}>
+                  <button className={styles.avatarMenuItem} onClick={onLogout} type="button">
                     Log out
                   </button>
                 </div>
               )}
             </div>
           </div>
-          <div className="desktop-nav-row">
-            <Link className="brand" to="/">
+          <div className={styles.desktopNavRow}>
+            <Link className={styles.brand} to="/">
               EventHub
             </Link>
-            <nav className="nav-links">
+            <nav className={styles.navLinks}>
               <Link to="/">Browse</Link>
               {user.role === "attendee" && <Link to="/registrations/mine">My registrations</Link>}
               {user.role === "organizer" && <Link to="/organizer/events">My events</Link>}
             </nav>
-            <div className="avatar-menu-wrap">
+            <div className={styles.avatarMenuWrap}>
               <button
-                className="avatar-btn"
+                className={styles.avatarBtn}
                 onClick={() => setAvatarMenuOpen((prev) => !prev)}
                 title="Open user menu"
                 type="button"
@@ -85,8 +83,8 @@ export const Navbar = ({ user, onLogout }: NavbarProps) => {
                 {initials}
               </button>
               {avatarMenuOpen && (
-                <div className="avatar-menu">
-                  <button className="avatar-menu-item" onClick={onLogout} type="button">
+                <div className={styles.avatarMenu}>
+                  <button className={styles.avatarMenuItem} onClick={onLogout} type="button">
                     Log out
                   </button>
                 </div>
@@ -94,7 +92,7 @@ export const Navbar = ({ user, onLogout }: NavbarProps) => {
             </div>
           </div>
           {menuOpen && (
-            <nav className="mobile-drawer">
+            <nav className={styles.mobileDrawer}>
               <Link onClick={() => setMenuOpen(false)} to="/">
                 Browse
               </Link>
@@ -108,7 +106,7 @@ export const Navbar = ({ user, onLogout }: NavbarProps) => {
                   My events
                 </Link>
               )}
-              <button className="drawer-logout" onClick={onLogout} type="button">
+              <button className={styles.drawerLogout} onClick={onLogout} type="button">
                 Logout
               </button>
             </nav>
@@ -116,10 +114,10 @@ export const Navbar = ({ user, onLogout }: NavbarProps) => {
         </>
       ) : (
         <>
-          <Link className="brand" to="/">
+          <Link className={styles.brand} to="/">
             Event Platform
           </Link>
-          <nav className="nav-links">
+          <nav className={styles.navLinks}>
             <Link to="/">Browse</Link>
             <Link to="/login">Login</Link>
             <Link to="/signup">Signup</Link>

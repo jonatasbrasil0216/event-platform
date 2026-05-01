@@ -1,0 +1,52 @@
+.shell {
+  margin-bottom: 0.9rem;
+}
+
+.titleRow h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.filtersRow {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filtersRow > :first-child {
+  min-width: 0;
+}
+
+.cardsGrid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 1fr;
+}
+
+.listPagination {
+  grid-column: 1 / -1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 0.9rem;
+}
+
+@media (min-width: 768px) {
+  .cardsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .filtersRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .filtersRow > :last-child {
+    align-self: flex-end;
+  }
+}

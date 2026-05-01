@@ -1,26 +1,46 @@
-import { createEventSchema, type Event, type EventCategory, updateEventSchema } from "@event-platform/shared";
+import {
+  createEventSchema,
+  type Event,
+  type EventCategory,
+  type OrganizerEventBucket,
+  type PaginatedResponse,
+  parsedSearchFiltersSchema,
+  updateEventSchema
+} from "@event-platform/shared";
 import { type Collection, ObjectId } from "mongodb";
+import { z } from "zod";
 import { getDb } from "../db/client";
+import { type EventDoc, toEvent } from "../db/events";
 import { forbiddenError, notFoundError, validationError } from "../lib/errors";
-
-interface EventDoc {
-  _id: ObjectId;
-  organizerId: ObjectId;
-  name: string;
-  description: string;
-  category: EventCategory;
-  date: Date;
-  location: string;
-  capacity: number;
-  registeredCount: number;
-  status: "draft" | "published" | "cancelled" | "completed";
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { dateCursorFilter, decodeCursor, pageInfoFromDocs } from "../lib/pagination";
+import { buildSearchMongoFilter, parseSearchFilters } from "./search";
 
 interface UserDoc {
   _id: ObjectId;
   name: string;
+}
+
+type ParsedFilters = z.infer<typeof parsedSearchFiltersSchema>;
+
+interface ListPublishedEventsInput {
+  q?: string;
+  category?: EventCategory;
+  date?: string;
+  cursor?: string;
+  limit: number;
+}
+
+interface ListMyEventsInput {
+  bucket: OrganizerEventBucket;
+  cursor?: string;
+  limit: number;
+}
+
+export interface OrganizerEventCounts {
+  published: number;
+  draft: number;
+  past: number;
+  cancelled: number;
 }
 
 const eventsCollection = async (): Promise<Collection<EventDoc>> => {
@@ -32,21 +52,6 @@ const usersCollection = async (): Promise<Collection<UserDoc>> => {
   const db = await getDb();
   return db.collection<UserDoc>("users");
 };
-
-const toEvent = (doc: EventDoc): Event => ({
-  _id: doc._id.toString(),
-  organizerId: doc.organizerId.toString(),
-  name: doc.name,
-  description: doc.description,
-  category: doc.category,
-  date: doc.date.toISOString(),
-  location: doc.location,
-  capacity: doc.capacity,
-  registeredCount: doc.registeredCount,
-  status: doc.status,
-  createdAt: doc.createdAt.toISOString(),
-  updatedAt: doc.updatedAt.toISOString()
-});
 
 export const createEvent = async (organizerId: string, input: unknown): Promise<{ event: Event }> => {
   const parsed = createEventSchema.safeParse(input);
@@ -75,10 +80,52 @@ export const createEvent = async (organizerId: string, input: unknown): Promise<
   return { event: toEvent(doc) };
 };
 
-export const listPublishedEvents = async (): Promise<{ data: Event[]; nextCursor: null }> => {
+const keywordMongoFilter = (keywords: string[]) => {
+  if (!keywords.length) return {};
+  const escaped = keywords.map((keyword) => keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return {
+    $or: escaped.flatMap((keyword) => {
+      const regex = new RegExp(keyword, "i");
+      return [{ name: regex }, { description: regex }, { location: regex }];
+    })
+  };
+};
+
+const explicitDateFilter = (date: string) => {
+  const from = new Date(`${date}T00:00:00.000Z`);
+  const to = new Date(`${date}T23:59:59.999Z`);
+  return { date: { $gte: from, $lte: to } };
+};
+
+export const listPublishedEvents = async (
+  input: ListPublishedEventsInput
+): Promise<PaginatedResponse<Event> & { filters: ParsedFilters | null; warning?: string }> => {
   const events = await eventsCollection();
-  const docs = await events.find({ status: "published" }).sort({ date: 1 }).limit(50).toArray();
-  return { data: docs.map(toEvent), nextCursor: null };
+  const cursor = decodeCursor(input.cursor);
+  const andFilters: Record<string, unknown>[] = [{ status: "published" }, { date: { $gte: new Date() } }];
+  let filters: ParsedFilters | null = null;
+  let warning: string | undefined;
+
+  if (input.q) {
+    const parsed = await parseSearchFilters(input.q);
+    filters = parsed.filters;
+    warning = parsed.warning;
+    andFilters.push(buildSearchMongoFilter(filters));
+    andFilters.push(keywordMongoFilter(filters.keywords));
+  }
+
+  if (input.category) andFilters.push({ category: input.category });
+  if (input.date) andFilters.push(explicitDateFilter(input.date));
+  const cursorFilter = dateCursorFilter("date", cursor, 1);
+  if (Object.keys(cursorFilter).length) andFilters.push(cursorFilter);
+
+  const docs = await events
+    .find({ $and: andFilters })
+    .sort({ date: 1, _id: 1 })
+    .limit(input.limit + 1)
+    .toArray();
+  const page = pageInfoFromDocs(docs, input.limit, (doc) => doc.date);
+  return { data: page.data.map(toEvent), pageInfo: page.pageInfo, filters, warning };
 };
 
 export const getEventById = async (eventId: string): Promise<{ event: Event; organizerName: string }> => {
@@ -97,13 +144,45 @@ export const getEventById = async (eventId: string): Promise<{ event: Event; org
   return { event: toEvent(doc), organizerName: organizer?.name ?? "Event organizer" };
 };
 
-export const listMyEvents = async (organizerId: string): Promise<{ data: Event[] }> => {
+const organizerBucketFilter = (bucket: OrganizerEventBucket, now: Date): Record<string, unknown> => {
+  if (bucket === "draft") return { status: "draft" };
+  if (bucket === "cancelled") return { status: "cancelled" };
+  if (bucket === "past") {
+    return {
+      status: { $nin: ["draft", "cancelled"] },
+      $or: [{ date: { $lt: now } }, { status: "completed" }]
+    };
+  }
+  return { status: "published", date: { $gte: now } };
+};
+
+export const listMyEvents = async (
+  organizerId: string,
+  input: ListMyEventsInput
+): Promise<PaginatedResponse<Event> & { counts: OrganizerEventCounts }> => {
   const events = await eventsCollection();
+  const now = new Date();
+  const organizerFilter = { organizerId: new ObjectId(organizerId) };
+  const cursor = decodeCursor(input.cursor);
+  const baseFilter = {
+    ...organizerFilter,
+    ...organizerBucketFilter(input.bucket, now)
+  };
+  const cursorFilter = dateCursorFilter("createdAt", cursor, -1);
+  const findFilter = Object.keys(cursorFilter).length ? { $and: [baseFilter, cursorFilter] } : baseFilter;
   const docs = await events
-    .find({ organizerId: new ObjectId(organizerId) })
-    .sort({ createdAt: -1 })
+    .find(findFilter)
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(input.limit + 1)
     .toArray();
-  return { data: docs.map(toEvent) };
+  const [published, draft, past, cancelled] = await Promise.all([
+    events.countDocuments({ ...organizerFilter, ...organizerBucketFilter("published", now) }),
+    events.countDocuments({ ...organizerFilter, ...organizerBucketFilter("draft", now) }),
+    events.countDocuments({ ...organizerFilter, ...organizerBucketFilter("past", now) }),
+    events.countDocuments({ ...organizerFilter, ...organizerBucketFilter("cancelled", now) })
+  ]);
+  const page = pageInfoFromDocs(docs, input.limit, (doc) => doc.createdAt);
+  return { data: page.data.map(toEvent), pageInfo: page.pageInfo, counts: { published, draft, past, cancelled } };
 };
 
 export const updateEvent = async (

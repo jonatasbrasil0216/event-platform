@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { signupRequest } from "../api/auth";
 import { useAuthStore } from "../stores/auth";
+import styles from "./auth.module.css";
 
 const schema = signupSchema;
 type FormValues = z.infer<typeof schema>;
@@ -19,12 +20,7 @@ export const SignupPage = () => {
   const setAuth = useAuthStore((s) => s.setAuth);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      email: "",
-      password: "",
-      name: "",
-      role: "attendee"
-    }
+    defaultValues: { email: "", password: "", name: "", role: "attendee" }
   });
 
   const signupMutation = useMutation({
@@ -34,19 +30,17 @@ export const SignupPage = () => {
       toast.success("Account created");
       navigate("/");
     },
-    onError: (error) => {
-      toast.error(error.message);
-    }
+    onError: (error) => toast.error(error.message)
   });
 
   return (
-    <main className="auth-page">
-      <section className="auth-card">
+    <main className={styles.page}>
+      <section className={styles.card}>
         <p className="eyebrow">Join in minutes</p>
         <h1>Create account</h1>
-        <p className="auth-copy">Choose your role and start hosting or discovering events.</p>
+        <p className={styles.copy}>Choose your role and start hosting or discovering events.</p>
         <form
-          className="auth-form"
+          className={styles.form}
           onSubmit={form.handleSubmit((values) => signupMutation.mutate(values))}
         >
           <label>
@@ -61,7 +55,7 @@ export const SignupPage = () => {
           </label>
           <label>
             Password
-            <div className="password-field">
+            <div className={styles.passwordField}>
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="At least 8 characters"
@@ -69,7 +63,7 @@ export const SignupPage = () => {
               />
               <button
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="password-toggle"
+                className={styles.passwordToggle}
                 onClick={() => setShowPassword((prev) => !prev)}
                 type="button"
               >
@@ -90,7 +84,7 @@ export const SignupPage = () => {
             {signupMutation.isPending ? "Creating..." : "Create account"}
           </button>
         </form>
-        <p className="auth-footer">
+        <p className={styles.footer}>
           Already have an account? <Link to="/login">Sign in</Link>
         </p>
       </section>

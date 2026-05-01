@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import styles from "./SegmentedCountTabs.module.css";
 
 interface SegmentedTabItem<T extends string> {
   id: T;
@@ -23,14 +23,13 @@ export const SegmentedCountTabs = <T extends string>({
 }: SegmentedCountTabsProps<T>) => {
   return (
     <div
-      className={className ? `segmented-count-tabs ${className}` : "segmented-count-tabs"}
+      className={className ? `${styles.tabs} ${className}` : styles.tabs}
       role="tablist"
       aria-label={ariaLabel}
-      style={{ "--segmented-tab-count": items.length } as CSSProperties}
     >
       {items.map((item) => (
         <button
-          className={`segmented-count-tab ${activeId === item.id ? "active" : ""}`}
+          className={`${styles.tab} ${activeId === item.id ? styles.active : ""}`}
           key={item.id}
           onClick={() => onChange(item.id)}
           role="tab"

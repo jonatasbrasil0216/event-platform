@@ -1,118 +1,105 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { EventCategory } from "@event-platform/shared";
 import { listEventsRequest } from "../api/events";
-import { type ParsedFilters, parseSearchRequest } from "../api/search";
 import { CategoryPills } from "../components/CategoryPills";
 import { DatePickerButton } from "../components/DatePickerButton";
 import { EventCard } from "../components/EventCard";
 import { LoadingBlocks } from "../components/LoadingBlocks";
 import { ParsedFilterChips } from "../components/ParsedFilterChips";
+import { PaginationControls } from "../components/PaginationControls";
 import { SearchBox } from "../components/SearchBox";
-
-const applyFiltersLocally = (
-  events: Awaited<ReturnType<typeof listEventsRequest>>["data"],
-  filters: ParsedFilters
-) => {
-  return events.filter((event) => {
-    if (filters.category && event.category !== filters.category) return false;
-    if (filters.maxCapacity !== null && event.capacity > filters.maxCapacity) return false;
-    if (filters.minCapacity !== null && event.capacity < filters.minCapacity) return false;
-    if (filters.dateRange.from && new Date(event.date) < new Date(filters.dateRange.from)) return false;
-    if (filters.dateRange.to && new Date(event.date) > new Date(filters.dateRange.to)) return false;
-    if (filters.keywords.length) {
-      const text = `${event.name} ${event.description} ${event.location}`.toLowerCase();
-      const keywordHit = filters.keywords.some((k) => text.includes(k.toLowerCase()));
-      if (!keywordHit) return false;
-    }
-    return true;
-  });
-};
+import styles from "./BrowseEventsPage.module.css";
 
 export const BrowseEventsPage = () => {
   const [query, setQuery] = useState("");
-  const [parsedFilters, setParsedFilters] = useState<ParsedFilters | null>(null);
-  const [searchEvents, setSearchEvents] = useState<Awaited<ReturnType<typeof listEventsRequest>>["data"] | null>(null);
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<"all" | EventCategory>("all");
   const [selectedDate, setSelectedDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [cursorByPage, setCursorByPage] = useState<Record<number, string | undefined>>({ 1: undefined });
 
   const eventsQuery = useQuery({
-    queryKey: ["events"],
-    queryFn: listEventsRequest
+    queryKey: ["events", submittedQuery, activeCategory, selectedDate, cursorByPage[page]],
+    queryFn: () =>
+      listEventsRequest({
+        q: submittedQuery || undefined,
+        category: activeCategory === "all" ? undefined : activeCategory,
+        date: selectedDate || undefined,
+        cursor: cursorByPage[page],
+        limit: 12
+      })
   });
 
-  const visibleEvents = useMemo(() => {
-    const baseEvents = searchEvents ?? eventsQuery.data?.data ?? [];
-    const categoryFiltered =
-      activeCategory === "all" ? baseEvents : baseEvents.filter((event) => event.category === activeCategory);
+  useEffect(() => {
+    const nextCursor = eventsQuery.data?.pageInfo.nextCursor;
+    if (!nextCursor) return;
+    setCursorByPage((current) => ({ ...current, [page + 1]: nextCursor }));
+  }, [eventsQuery.data?.pageInfo.nextCursor, page]);
 
-    if (!selectedDate) {
-      return categoryFiltered;
-    }
+  useEffect(() => {
+    if (eventsQuery.data?.warning) toast.warning(eventsQuery.data.warning);
+  }, [eventsQuery.data?.warning]);
 
-    return categoryFiltered.filter((event) => {
-      const eventDate = new Date(event.date);
-      const yyyy = eventDate.getFullYear();
-      const mm = String(eventDate.getMonth() + 1).padStart(2, "0");
-      const dd = String(eventDate.getDate()).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd}` === selectedDate;
-    });
-  }, [activeCategory, eventsQuery.data?.data, searchEvents, selectedDate]);
+  const resetPaging = () => {
+    setPage(1);
+    setCursorByPage({ 1: undefined });
+  };
 
-  const runSearch = async () => {
+  const runSearch = () => {
     const trimmed = query.trim();
-    if (!trimmed) {
-      setParsedFilters(null);
-      setSearchEvents(null);
-      return;
-    }
-    try {
-      const result = await parseSearchRequest(trimmed);
-      setParsedFilters(result.filters);
-      setSearchEvents(result.events);
-      if (result.warning) toast.warning(result.warning);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Search failed");
-    }
+    setSubmittedQuery(trimmed);
+    resetPaging();
   };
 
-  const removeChip = (key: "category" | "maxCapacity" | "minCapacity" | "dateFrom" | "dateTo" | "keywords") => {
-    if (!parsedFilters) return;
-    const updated: ParsedFilters = {
-      ...parsedFilters,
-      dateRange: { ...parsedFilters.dateRange }
-    };
-    if (key === "category") updated.category = null;
-    if (key === "maxCapacity") updated.maxCapacity = null;
-    if (key === "minCapacity") updated.minCapacity = null;
-    if (key === "dateFrom") updated.dateRange.from = null;
-    if (key === "dateTo") updated.dateRange.to = null;
-    if (key === "keywords") updated.keywords = [];
-    setParsedFilters(updated);
-    setSearchEvents(applyFiltersLocally(eventsQuery.data?.data ?? [], updated));
+  const removeChip = (
+    key: "category" | "maxCapacity" | "minCapacity" | "dateFrom" | "dateTo" | "keywords"
+  ) => {
+    if (key === "category") setActiveCategory("all");
+    if (key === "dateFrom" || key === "dateTo") setSelectedDate("");
+    if (key === "maxCapacity" || key === "minCapacity" || key === "keywords") {
+      setQuery("");
+      setSubmittedQuery("");
+    }
+    resetPaging();
   };
+
+  const visibleEvents = eventsQuery.data?.data ?? [];
+  const pageCount = eventsQuery.data?.pageInfo.hasNextPage ? page + 1 : page;
 
   return (
     <main className="container">
-      <section className="panel browse-shell">
-        <div className="section-header browse-title-row">
+      <section className={`panel ${styles.shell}`}>
+        <div className={styles.titleRow}>
           <h1>Discover events</h1>
         </div>
         <SearchBox
+          disabled={eventsQuery.isFetching}
+          isLoading={eventsQuery.isFetching}
           onChange={setQuery}
-          onSubmit={() => {
-            void runSearch();
-          }}
+          onSubmit={runSearch}
           placeholder="tech meetups next month under 50 people"
           value={query}
         />
-        {parsedFilters && (
-          <ParsedFilterChips filters={parsedFilters} onRemove={removeChip} />
+        {eventsQuery.data?.filters && (
+          <ParsedFilterChips filters={eventsQuery.data.filters} onRemove={removeChip} />
         )}
-        <div className="filters-row">
-          <CategoryPills activeCategory={activeCategory} onChange={setActiveCategory} />
-          <DatePickerButton onChange={setSelectedDate} value={selectedDate} />
+        <div className={styles.filtersRow}>
+          <CategoryPills
+            activeCategory={activeCategory}
+            onChange={(value) => {
+              setActiveCategory(value);
+              resetPaging();
+            }}
+          />
+          <DatePickerButton
+            onChange={(value) => {
+              setSelectedDate(value);
+              resetPaging();
+            }}
+            value={selectedDate}
+          />
         </div>
         <div className="divider" />
       </section>
@@ -124,7 +111,7 @@ export const BrowseEventsPage = () => {
           <p>Please refresh the page and try again.</p>
         </section>
       ) : (
-        <section className="cards-grid">
+        <section className={styles.cardsGrid}>
           {visibleEvents.length ? (
             visibleEvents.map((event) => <EventCard event={event} key={event._id} />)
           ) : (
@@ -132,6 +119,18 @@ export const BrowseEventsPage = () => {
               <h3>No events published yet</h3>
               <p>Check back soon for upcoming sessions.</p>
             </article>
+          )}
+          {pageCount > 1 && (
+            <div className={styles.listPagination}>
+              <PaginationControls
+                onPageChange={(nextPage) => {
+                  if (nextPage < 1 || nextPage > pageCount) return;
+                  setPage(nextPage);
+                }}
+                page={page}
+                pageCount={pageCount}
+              />
+            </div>
           )}
         </section>
       )}

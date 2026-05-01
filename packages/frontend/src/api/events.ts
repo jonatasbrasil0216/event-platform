@@ -1,4 +1,4 @@
-import type { Event } from "@event-platform/shared";
+import type { Event, OrganizerEventBucket, PaginatedResponse } from "@event-platform/shared";
 import { apiRequest } from "./client";
 
 type EventInput = {
@@ -10,13 +10,49 @@ type EventInput = {
   capacity: number;
 };
 
-export const listEventsRequest = () =>
-  apiRequest<{ data: Event[]; nextCursor: null }>("/events", {
-    method: "GET"
-  });
+export type ParsedFilters = {
+  category: EventInput["category"] | null;
+  dateRange: { from: string | null; to: string | null };
+  maxCapacity: number | null;
+  minCapacity: number | null;
+  keywords: string[];
+};
 
-export const listMyEventsRequest = () =>
-  apiRequest<{ data: Event[] }>("/events/mine", {
+export type ListEventsParams = {
+  q?: string;
+  category?: EventInput["category"];
+  date?: string;
+  cursor?: string;
+  limit?: number;
+};
+
+export type ListMyEventsParams = {
+  bucket: OrganizerEventBucket;
+  cursor?: string;
+  limit?: number;
+};
+
+export type OrganizerEventCounts = Record<OrganizerEventBucket, number>;
+
+export const toQueryString = (params: Record<string, string | number | undefined>) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") query.set(key, String(value));
+  });
+  const value = query.toString();
+  return value ? `?${value}` : "";
+};
+
+export const listEventsRequest = (params: ListEventsParams = {}) =>
+  apiRequest<PaginatedResponse<Event> & { filters: ParsedFilters | null; warning?: string }>(
+    `/events${toQueryString(params)}`,
+    {
+      method: "GET"
+    }
+  );
+
+export const listMyEventsRequest = (params: ListMyEventsParams) =>
+  apiRequest<PaginatedResponse<Event> & { counts: OrganizerEventCounts }>(`/events/mine${toQueryString(params)}`, {
     method: "GET",
     auth: true
   });

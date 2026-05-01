@@ -6,6 +6,20 @@ export type EventStatus = "draft" | "published" | "cancelled" | "completed";
 
 export type RegistrationStatus = "active" | "cancelled";
 
+export interface PageInfo {
+  nextCursor: string | null;
+  hasNextPage: boolean;
+  total?: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pageInfo: PageInfo;
+}
+
+export type OrganizerEventBucket = "published" | "draft" | "past" | "cancelled";
+export type RegistrationBucket = "upcoming" | "past";
+
 export interface User {
   _id: string;
   email: string;

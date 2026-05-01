@@ -1,0 +1,19 @@
+.controls {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.btnActive {
+  background: #f6f7fa;
+  color: #1a2231;
+  border-color: transparent;
+}

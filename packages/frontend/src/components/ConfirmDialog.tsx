@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import styles from "./ConfirmDialog.module.css";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -26,24 +27,20 @@ export const ConfirmDialog = ({
   useEffect(() => {
     if (!open) return;
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
+      if (event.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onEscape);
-    return () => {
-      document.removeEventListener("keydown", onEscape);
-    };
+    return () => document.removeEventListener("keydown", onEscape);
   }, [open, onClose]);
 
   if (!open) return null;
 
   return (
-    <div aria-modal="true" className="confirm-dialog-overlay" onClick={onClose} role="dialog">
-      <div className="confirm-dialog" onClick={(event) => event.stopPropagation()}>
+    <div aria-modal="true" className={styles.overlay} onClick={onClose} role="dialog">
+      <div className={styles.dialog} onClick={(event) => event.stopPropagation()}>
         <h3>{title}</h3>
         <p>{message}</p>
-        <div className="confirm-dialog-actions">
+        <div className={styles.actions}>
           <button className="btn btn-secondary" onClick={onClose} type="button">
             {cancelLabel}
           </button>

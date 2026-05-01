@@ -1,0 +1,23 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: #dce4f3;
+  border-radius: 10px;
+  padding: 0.46rem 0.75rem;
+}
+
+.anchorInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}

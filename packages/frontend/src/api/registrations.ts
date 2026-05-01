@@ -1,5 +1,6 @@
-import type { Event, Registration } from "@event-platform/shared";
+import type { Event, PaginatedResponse, Registration, RegistrationBucket } from "@event-platform/shared";
 import { apiRequest } from "./client";
+import { toQueryString } from "./events";
 
 export const registerForEventRequest = (eventId: string) =>
   apiRequest<{ ok: true }>(`/events/${eventId}/register`, {
@@ -13,18 +14,37 @@ export const cancelRegistrationRequest = (eventId: string) =>
     auth: true
   });
 
-export const listMyRegistrationsRequest = () =>
-  apiRequest<{ data: Array<{ registration: Registration; event: Event; organizerName: string }> }>(
-    "/registrations/mine",
+export type ListMyRegistrationsParams = {
+  bucket: RegistrationBucket;
+  cursor?: string;
+  limit?: number;
+};
+
+export type ListEventAttendeesParams = {
+  q?: string;
+  sort?: "recent" | "oldest";
+  cursor?: string;
+  limit?: number;
+};
+
+export type RegistrationCounts = Record<RegistrationBucket, number>;
+
+export const listMyRegistrationsRequest = (params: ListMyRegistrationsParams) =>
+  apiRequest<
+    PaginatedResponse<{ registration: Registration; event: Event; organizerName: string }> & { counts: RegistrationCounts }
+  >(
+    `/registrations/mine${toQueryString(params)}`,
     {
       method: "GET",
       auth: true
     }
   );
 
-export const listEventAttendeesRequest = (eventId: string) =>
-  apiRequest<{ data: Array<{ _id: string; name: string; email: string; registeredAt: string }>; total: number }>(
-    `/events/${eventId}/attendees`,
+export const listEventAttendeesRequest = (eventId: string, params: ListEventAttendeesParams = {}) =>
+  apiRequest<
+    PaginatedResponse<{ _id: string; name: string; email: string; registeredAt: string }> & { total: number }
+  >(
+    `/events/${eventId}/attendees${toQueryString(params)}`,
     {
       method: "GET",
       auth: true

@@ -1,5 +1,7 @@
 import type { EventCategory } from "@event-platform/shared";
-import { getCategoryLabel, getCategoryToneClass } from "../utils/categoryTheme";
+import { getCategoryToneClass } from "../utils/categoryTheme";
+import { CategoryChip } from "./CategoryChip";
+import styles from "./CategoryPills.module.css";
 
 interface CategoryPillsProps {
   activeCategory: "all" | EventCategory;
@@ -8,20 +10,15 @@ interface CategoryPillsProps {
 
 export const CategoryPills = ({ activeCategory, onChange }: CategoryPillsProps) => {
   return (
-    <div className="category-pills">
+    <div className={styles.pills}>
       {(["all", "tech", "networking", "workshop", "social"] as const).map((category) => (
         <button
-          className={`category-pill ${category === "all" ? "" : getCategoryToneClass(category)} ${activeCategory === category ? "active" : ""}`}
+          className={`${styles.pill} ${category !== "all" ? getCategoryToneClass(category) : ""} ${activeCategory === category ? styles.active : ""}`}
           key={category}
           onClick={() => onChange(category)}
           type="button"
         >
-          {category === "all" ? "All" : (
-            <>
-              <span className="category-dot" />
-              {getCategoryLabel(category)}
-            </>
-          )}
+          {category === "all" ? "All" : <CategoryChip category={category} variant="minimal" />}
         </button>
       ))}
     </div>

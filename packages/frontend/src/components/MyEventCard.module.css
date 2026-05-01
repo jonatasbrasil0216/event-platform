@@ -1,0 +1,35 @@
+.card {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(24, 27, 35, 0.8);
+  padding: 0.8rem;
+}
+
+.card h3 {
+  margin: 0.58rem 0 0.72rem;
+  line-height: 1.2;
+  font-size: 1.04rem;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.actions {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+@media (min-width: 768px) {
+  .card {
+    display: block;
+  }
+
+  .actions .btn {
+    min-width: 0;
+  }
+}

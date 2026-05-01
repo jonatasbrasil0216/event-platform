@@ -1,0 +1,25 @@
+.tabs {
+  padding: 0.25rem;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 11, 18, 0.55);
+  display: inline-flex;
+  gap: 0.35rem;
+  width: fit-content;
+}
+
+.tab {
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #b7c3d6;
+  padding: 0.42rem 0.7rem;
+  font-weight: 700;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.tab.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f8ff;
+}

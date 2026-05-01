@@ -11,17 +11,21 @@ provider:
     JWT_SECRET: ${env:JWT_SECRET}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    CORS_ORIGIN: ${env:CORS_ORIGIN, ''}
 
 plugins:
   - serverless-esbuild
 
 functions:
-  health:
-    handler: src/handlers/health.handler
+  api:
+    handler: src/handlers/api.handler
     events:
       - httpApi:
-          path: /health
-          method: get
+          path: /{proxy+}
+          method: any
+      - httpApi:
+          path: /
+          method: any
 
 custom:
   esbuild:

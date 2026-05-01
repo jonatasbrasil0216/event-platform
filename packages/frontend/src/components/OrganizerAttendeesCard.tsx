@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import { PaginationControls } from "./PaginationControls";
+import styles from "./OrganizerAttendeesCard.module.css";
 
 export interface OrganizerAttendee {
   _id: string;
@@ -36,13 +37,13 @@ export const OrganizerAttendeesCard = ({
   onPageChange
 }: OrganizerAttendeesCardProps) => {
   return (
-    <article className="panel org-attendees">
-      <div className="org-attendees-head">
+    <article className={`panel ${styles.card}`}>
+      <div className={styles.head}>
         <h3>Attendees</h3>
         <span>{total} registered</span>
       </div>
-      <div className="org-attendees-controls">
-        <label className="org-search">
+      <div className={styles.controls}>
+        <label className={styles.search}>
           <Search size={14} strokeWidth={1.8} />
           <input
             onChange={(queryEvent) => onAttendeeQueryChange(queryEvent.target.value)}
@@ -51,23 +52,25 @@ export const OrganizerAttendeesCard = ({
           />
         </label>
         <select
-          className="org-sort"
-          onChange={(sortEvent) => onSortModeChange(sortEvent.target.value === "oldest" ? "oldest" : "recent")}
+          className={styles.sort}
+          onChange={(sortEvent) =>
+            onSortModeChange(sortEvent.target.value === "oldest" ? "oldest" : "recent")
+          }
           value={sortMode}
         >
           <option value="recent">Recent first</option>
           <option value="oldest">Oldest first</option>
         </select>
       </div>
-      <div className="org-attendees-list">
+      <div className={styles.list}>
         {attendees.map((attendee) => (
-          <div className="org-attendee-row" key={attendee._id}>
+          <div className={styles.attendeeRow} key={attendee._id}>
             <span className="host-avatar">{attendee.name.slice(0, 2).toUpperCase()}</span>
             <div>
-              <p className="org-attendee-name">{attendee.name}</p>
-              <p className="org-attendee-email">{attendee.email}</p>
+              <p className={styles.attendeeName}>{attendee.name}</p>
+              <p className={styles.attendeeEmail}>{attendee.email}</p>
             </div>
-            <span className="org-attendee-date">
+            <span className={styles.attendeeDate}>
               {new Date(attendee.registeredAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -76,7 +79,7 @@ export const OrganizerAttendeesCard = ({
             </span>
           </div>
         ))}
-        <div className="org-pagination">
+        <div className={styles.pagination}>
           <span>{`Showing ${shownCount} of ${filteredTotal}`}</span>
           <PaginationControls onPageChange={onPageChange} page={page} pageCount={pageCount} />
         </div>

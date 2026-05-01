@@ -1,31 +1,44 @@
 import { Search } from "lucide-react";
+import styles from "./SearchBox.module.css";
 
 interface SearchBoxProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
   placeholder?: string;
+  disabled?: boolean;
+  isLoading?: boolean;
 }
 
-export const SearchBox = ({ value, onChange, onSubmit, placeholder }: SearchBoxProps) => {
+export const SearchBox = ({
+  value,
+  onChange,
+  onSubmit,
+  placeholder,
+  disabled = false,
+  isLoading = false
+}: SearchBoxProps) => {
   return (
-    <div className="search-row">
-      <div className="search-input-wrap">
-        <span className="search-icon" aria-hidden="true">
+    <div className={styles.searchRow}>
+      <div className={styles.searchInputWrap}>
+        <span className={styles.searchIcon} aria-hidden="true">
           <Search size={16} strokeWidth={1.9} />
         </span>
         <input
-          className="search-input"
+          className={styles.searchInput}
+          disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              onSubmit();
-            }
+            if (event.key === "Enter" && !disabled) onSubmit();
           }}
           placeholder={placeholder ?? "Search events"}
           value={value}
         />
-        <span className="search-hint">Press ↵</span>
+        {isLoading ? (
+          <span aria-label="Searching" className={styles.searchSpinner} />
+        ) : (
+          <span className={styles.searchHint}>Press ↵</span>
+        )}
       </div>
     </div>
   );
