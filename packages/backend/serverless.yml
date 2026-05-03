@@ -5,6 +5,8 @@ service: event-platform-api
 
 frameworkVersion: "3"
 
+useDotenv: true
+
 provider:
   name: aws
   runtime: nodejs20.x
@@ -22,6 +24,7 @@ provider:
 
 plugins:
   - serverless-esbuild
+  - serverless-offline
 
 custom:
   esbuild:
@@ -30,14 +33,142 @@ custom:
     sourcemap: true
     target: node20
     platform: node
+  serverless-offline:
+    httpPort: 3001
+    lambdaPort: 3002
+    noBanner: true
 
 functions:
-  api:
-    handler: src/handlers/api.handler
+  # ── Health ──────────────────────────────────────────────────────────────────
+  health:
+    handler: src/handlers/health/check.handler
     events:
       - httpApi:
-          path: /{proxy+}
-          method: any
+          path: /health
+          method: GET
+
+  # ── Auth ────────────────────────────────────────────────────────────────────
+  authSignup:
+    handler: src/handlers/auth/signup.handler
+    events:
       - httpApi:
-          path: /
-          method: any
+          path: /auth/signup
+          method: POST
+
+  authLogin:
+    handler: src/handlers/auth/login.handler
+    events:
+      - httpApi:
+          path: /auth/login
+          method: POST
+
+  authMe:
+    handler: src/handlers/auth/me.handler
+    events:
+      - httpApi:
+          path: /auth/me
+          method: GET
+
+  # ── Events (public) ─────────────────────────────────────────────────────────
+  listEvents:
+    handler: src/handlers/events/list.handler
+    events:
+      - httpApi:
+          path: /events
+          method: GET
+
+  getEvent:
+    handler: src/handlers/events/get.handler
+    events:
+      - httpApi:
+          path: /events/{id}
+          method: GET
+
+  # ── Events (organizer) ──────────────────────────────────────────────────────
+  listMyEvents:
+    handler: src/handlers/events/mine.handler
+    events:
+      - httpApi:
+          path: /events/mine
+          method: GET
+
+  createEvent:
+    handler: src/handlers/events/create.handler
+    events:
+      - httpApi:
+          path: /events
+          method: POST
+
+  updateEvent:
+    handler: src/handlers/events/update.handler
+    events:
+      - httpApi:
+          path: /events/{id}
+          method: PATCH
+
+  deleteEvent:
+    handler: src/handlers/events/delete.handler
+    events:
+      - httpApi:
+          path: /events/{id}
+          method: DELETE
+
+  cancelEvent:
+    handler: src/handlers/events/cancel.handler
+    events:
+      - httpApi:
+          path: /events/{id}/cancel
+          method: PATCH
+
+  republishEvent:
+    handler: src/handlers/events/republish.handler
+    events:
+      - httpApi:
+          path: /events/{id}/republish
+          method: PATCH
+
+  makeEventDraft:
+    handler: src/handlers/events/draft.handler
+    events:
+      - httpApi:
+          path: /events/{id}/draft
+          method: PATCH
+
+  # ── Registrations ───────────────────────────────────────────────────────────
+  registerForEvent:
+    handler: src/handlers/registrations/register.handler
+    events:
+      - httpApi:
+          path: /events/{id}/register
+          method: POST
+
+  cancelRegistration:
+    handler: src/handlers/registrations/cancel.handler
+    events:
+      - httpApi:
+          path: /events/{id}/register
+          method: DELETE
+
+  listMyRegistrations:
+    handler: src/handlers/registrations/mine.handler
+    events:
+      - httpApi:
+          path: /registrations/mine
+          method: GET
+
+  # ── Attendees ───────────────────────────────────────────────────────────────
+  listEventAttendees:
+    handler: src/handlers/attendees/list.handler
+    events:
+      - httpApi:
+          path: /events/{id}/attendees
+          method: GET
+
+  # ── Search ──────────────────────────────────────────────────────────────────
+  parseSearch:
+    handler: src/handlers/search/parse.handler
+    timeout: 60
+    events:
+      - httpApi:
+          path: /search/parse
+          method: POST

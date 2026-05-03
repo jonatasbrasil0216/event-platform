@@ -1,4 +1,4 @@
-import type { Request } from "express";
+import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { ObjectId } from "mongodb";
 import { forbiddenError, unauthorizedError } from "./errors";
 import { verifyAuthToken } from "./jwt";
@@ -8,8 +8,8 @@ export interface AuthContext {
   role: "organizer" | "attendee";
 }
 
-export const requireAuth = (req: Request): AuthContext => {
-  const authHeader = req.headers.authorization;
+export const requireAuth = (event: APIGatewayProxyEventV2): AuthContext => {
+  const authHeader = event.headers?.authorization ?? event.headers?.Authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     throw unauthorizedError("Missing or invalid authorization header");
   }
