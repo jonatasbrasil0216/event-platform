@@ -1,15 +1,8 @@
 import { parsedSearchFiltersSchema, parseSearchQuerySchema, type Event as AppEvent } from "@event-platform/shared";
-import { type Collection } from "mongodb";
 import { z } from "zod";
 import { getOpenAIClient } from "../ai/openai";
-import { getDb } from "../db/client";
-import { type EventDoc, toEvent } from "../db/events";
 import { validationError } from "../lib/errors";
-
-const eventsCollection = async (): Promise<Collection<EventDoc>> => {
-  const db = await getDb();
-  return db.collection<EventDoc>("events");
-};
+import { findEvents, toEvent } from "../repositories/events";
 
 const fallbackFilters = (query: string) => ({
   category: null,
@@ -83,11 +76,9 @@ export const parseSearchFilters = async (query: string): Promise<{ filters: Pars
   return { filters, warning };
 };
 
-const applyFilters = async (filters: z.infer<typeof parsedSearchFiltersSchema>): Promise<AppEvent[]> => {
-  const events = await eventsCollection();
+const applyFilters = async (filters: ParsedFilters): Promise<AppEvent[]> => {
   const mongoFilter = buildSearchMongoFilter(filters);
-
-  let docs = await events.find(mongoFilter).sort({ date: 1 }).limit(50).toArray();
+  let docs = await findEvents(mongoFilter, { sort: { date: 1 }, limit: 50 });
 
   if (filters.keywords.length) {
     const text = filters.keywords.join(" ").toLowerCase();
@@ -105,9 +96,7 @@ const applyFilters = async (filters: z.infer<typeof parsedSearchFiltersSchema>):
 
 export const parseAndSearch = async (input: unknown) => {
   const parsed = parseSearchQuerySchema.safeParse(input);
-  if (!parsed.success) {
-    throw validationError("Invalid search payload", parsed.error.flatten());
-  }
+  if (!parsed.success) throw validationError("Invalid search payload", parsed.error.flatten());
 
   const query = parsed.data.query.trim();
   const { filters, warning } = await parseSearchFilters(query);
