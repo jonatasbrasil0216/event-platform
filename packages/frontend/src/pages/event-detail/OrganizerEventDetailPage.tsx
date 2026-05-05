@@ -11,12 +11,12 @@ import {
   deleteEventRequest,
   makeEventDraftRequest
 } from "../../api/events";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
-import { MarkdownContent } from "../../components/MarkdownContent";
-import { OrganizerAttendeesCard } from "../../components/OrganizerAttendeesCard";
-import { CategoryChip } from "../../components/CategoryChip";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import pageStyles from "./EventDetailPage.module.css";
+import { ConfirmDialog } from "../../components/confirm-dialog";
+import { MarkdownContent } from "../../components/markdown-content";
+import { OrganizerAttendeesCard } from "../../components/organizer-attendees-card";
+import { CategoryChip } from "../../components/category-chip";
+import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import pageStyles from "./styles.module.css";
 import { ATTENDEE_SEARCH_DEBOUNCE_MS, ATTENDEES_PAGE_SIZE } from "./constants";
 import {
   getOrganizerConfirmCopy,

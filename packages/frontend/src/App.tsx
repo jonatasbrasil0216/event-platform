@@ -1,14 +1,14 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactElement } from "react";
-import { Navbar } from "./components/Navbar";
+import { Navbar } from "./components/navbar";
 import { LoginPage } from "./pages/auth/LoginPage";
 import { SignupPage } from "./pages/auth/SignupPage";
-import { BrowseEventsPage } from "./pages/browse-events/BrowseEventsPage";
-import { EventDetailPage } from "./pages/event-detail/EventDetailPage";
-import { EventFormPage } from "./pages/event-form/EventFormPage";
-import { HomePage } from "./pages/home/HomePage";
-import { MyEventsPage } from "./pages/my-events/MyEventsPage";
-import { MyRegistrationsPage } from "./pages/my-registrations/MyRegistrationsPage";
+import { BrowseEventsPage } from "./pages/browse-events";
+import { EventDetailPage } from "./pages/event-detail";
+import { EventFormPage } from "./pages/event-form";
+import { HomePage } from "./pages/home";
+import { MyEventsPage } from "./pages/my-events";
+import { MyRegistrationsPage } from "./pages/my-registrations";
 import { useAuthStore } from "./stores/auth";
 
 export const App = () => {

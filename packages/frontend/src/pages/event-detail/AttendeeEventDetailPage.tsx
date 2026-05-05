@@ -4,9 +4,9 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import type { Event, User } from "@event-platform/shared";
 import { cancelRegistrationRequest, listMyRegistrationsRequest, registerForEventRequest } from "../../api/registrations";
-import { MarkdownContent } from "../../components/MarkdownContent";
-import { CategoryChip } from "../../components/CategoryChip";
-import pageStyles from "./EventDetailPage.module.css";
+import { MarkdownContent } from "../../components/markdown-content";
+import { CategoryChip } from "../../components/category-chip";
+import pageStyles from "./styles.module.css";
 import { resolveAttendeeRegistrationCta } from "./attendeeRegistrationCta";
 import type { DetailMetaItem } from "./types";
 
