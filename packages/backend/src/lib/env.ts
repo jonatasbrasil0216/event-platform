@@ -30,20 +30,12 @@ const ensureEnvLoaded = () => {
     return;
   }
 
-  const candidates = [
-    path.resolve(process.cwd(), ".env"),
-    path.resolve(process.cwd(), "../../.env")
-  ];
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      dotenv.config({ path: candidate });
-      envLoaded = true;
-      return;
-    }
+  const candidate = path.resolve(process.cwd(), ".env");
+  if (fs.existsSync(candidate)) {
+    dotenv.config({ path: candidate });
+  } else {
+    dotenv.config();
   }
-
-  dotenv.config();
   envLoaded = true;
 };
 
