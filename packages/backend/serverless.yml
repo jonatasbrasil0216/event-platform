@@ -14,17 +14,44 @@ provider:
   region: ${opt:region, 'us-east-1'}
   memorySize: 512
   timeout: 29
+  # ── VPC — required to reach DocumentDB ────────────────────────────────────
+  # Set VPC_ID, SUBNET_ID_1, SUBNET_ID_2 in .env to the private subnets where
+  # your DocumentDB cluster lives. Then add the exported LambdaSecurityGroupId
+  # as an inbound rule on the DocumentDB security group (port 27017).
+  # Private subnets need a NAT Gateway for outbound calls (OpenAI, JWT JWKS).
+  vpc:
+    securityGroupIds:
+      - Fn::GetAtt: [LambdaSecurityGroup, GroupId]
+    subnetIds:
+      - ${env:SUBNET_ID_1}
+      - ${env:SUBNET_ID_2}
+  httpApi:
+    cors:
+      allowedOrigins: "*"
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowedMethods:
+        - GET
+        - POST
+        - PATCH
+        - DELETE
+        - OPTIONS
+      maxAge: 300
   environment:
     NODE_ENV: production
     MONGODB_URI: ${env:MONGODB_URI}
     JWT_SECRET: ${env:JWT_SECRET}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN, '7d'}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
-    CORS_ORIGIN: ${env:CORS_ORIGIN, ''}
 
 plugins:
   - serverless-esbuild
   - serverless-offline
+
+package:
+  patterns:
+    - global-bundle.pem
 
 custom:
   esbuild:
@@ -172,3 +199,32 @@ functions:
       - httpApi:
           path: /search/parse
           method: POST
+
+# ── Infrastructure ────────────────────────────────────────────────────────────
+
+resources:
+  Resources:
+    # Security group for Lambda functions. After the first deploy, copy the
+    # exported LambdaSecurityGroupId from the CloudFormation stack outputs and
+    # add it as an inbound rule on the DocumentDB cluster security group:
+    #   Protocol: TCP  Port: 27017  Source: <LambdaSecurityGroupId>
+    LambdaSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: ${self:service}-${sls:stage}-lambda
+        VpcId: ${env:VPC_ID}
+        Tags:
+          - Key: Name
+            Value: ${self:service}-${sls:stage}-lambda
+          - Key: Stage
+            Value: ${sls:stage}
+
+  Outputs:
+    LambdaSecurityGroupId:
+      Description: >
+        Add this SG as an inbound rule on the DocumentDB security group
+        (TCP 27017) so Lambda can reach the cluster.
+      Value:
+        Fn::GetAtt: [LambdaSecurityGroup, GroupId]
+      Export:
+        Name: !Sub ${AWS::StackName}-LambdaSecurityGroupId
