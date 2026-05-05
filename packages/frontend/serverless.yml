@@ -1,0 +1,110 @@
+# Deploys the Vite/React frontend to S3 + CloudFront.
+# Run `pnpm build` first, then `serverless deploy` from this directory.
+# Requires the serverless-s3-sync plugin:
+#   npm install --save-dev serverless-s3-sync
+service: event-platform-frontend
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+
+plugins:
+  - serverless-s3-sync
+
+custom:
+  bucketName: ${self:service}-${sls:stage}-site
+  s3Sync:
+    - bucketName: ${self:custom.bucketName}
+      localDir: dist
+      deleteRemoved: true
+      defaultContentType: text/html
+      params:
+        - "*.html":
+            CacheControl: "no-cache, no-store, must-revalidate"
+        - "assets/**":
+            CacheControl: "public, max-age=31536000, immutable"
+
+resources:
+  Resources:
+    FrontendBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        Tags:
+          - Key: Stage
+            Value: ${sls:stage}
+
+    FrontendBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref FrontendBucket
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Principal:
+                CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId
+              Action: s3:GetObject
+              Resource: !Sub "${FrontendBucket.Arn}/*"
+
+    CloudFrontOAI:
+      Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+      Properties:
+        CloudFrontOriginAccessIdentityConfig:
+          Comment: OAI for ${self:custom.bucketName}
+
+    CloudFrontDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Enabled: true
+          Comment: ${self:service}-${sls:stage}
+          DefaultRootObject: index.html
+          HttpVersion: http2
+          PriceClass: PriceClass_100
+          Origins:
+            - Id: S3Origin
+              DomainName: !GetAtt FrontendBucket.RegionalDomainName
+              S3OriginConfig:
+                OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
+          DefaultCacheBehavior:
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized (AWS managed)
+            Compress: true
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+          CustomErrorResponses:
+            - ErrorCode: 403
+              ResponseCode: 200
+              ResponsePagePath: /index.html
+              ErrorCachingMinTTL: 0
+            - ErrorCode: 404
+              ResponseCode: 200
+              ResponsePagePath: /index.html
+              ErrorCachingMinTTL: 0
+        Tags:
+          - Key: Stage
+            Value: ${sls:stage}
+
+  Outputs:
+    BucketName:
+      Value: !Ref FrontendBucket
+      Export:
+        Name: !Sub "${AWS::StackName}-BucketName"
+
+    CloudFrontUrl:
+      Description: Public URL for the frontend
+      Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+      Export:
+        Name: !Sub "${AWS::StackName}-CloudFrontUrl"
+
+    CloudFrontDistributionId:
+      Description: CloudFront distribution ID (needed for cache invalidation)
+      Value: !Ref CloudFrontDistribution
+      Export:
+        Name: !Sub "${AWS::StackName}-DistributionId"
