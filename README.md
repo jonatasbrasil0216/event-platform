@@ -1,54 +1,107 @@
 # Event Platform
 
-Serverless event platform where organizers create events and attendees browse/register with AI-powered natural-language search.
+A full-stack, serverless event platform where organizers publish events and attendees browse, discover, and register — powered by AI-assisted natural-language search.
 
-## Submission checklist (fill before review)
+---
 
-- **GitHub**: public repo URL with this source
-- **Live frontend**: deployed static app URL
-- **Live API**: deployed API base URL (verify `GET /health` returns `{"ok":true}`)
-- Keep the three links below in sync with your deployment
+## Packages
 
-## Live URLs
+| Package | Description |
+|---------|-------------|
+| [`packages/shared`](packages/shared) | Zod schemas and TypeScript types shared between backend and frontend |
+| [`packages/backend`](packages/backend/README.md) | TypeScript REST API — individual AWS Lambda functions behind API Gateway |
+| [`packages/frontend`](packages/frontend/README.md) | React 19 + Vite SPA — browse, search, register, and manage events |
 
-- Frontend: _add deployed frontend URL_
-- API: _add deployed API base URL_ (example health endpoint: `/health`)
-- GitHub: _add repo URL_
+---
 
 ## Tech Stack
 
-- Frontend: React + TypeScript + Vite + TanStack Query + React Router + Zustand + react-hook-form + Zod + Sonner
-- Backend: Node.js + TypeScript + Express wrapped with `serverless-http`, deployed as **AWS Lambda** behind **API Gateway HTTP API** (Serverless Framework v3 + `serverless-esbuild`) + MongoDB Atlas
-- AI: OpenAI (`gpt-4o-mini`) structured JSON parsing for search
-- Shared: Workspace package with common types and schemas (`@event-platform/shared`)
+### Frontend
+- **React 19** + TypeScript + **Vite 7**
+- **TanStack Query v5** — server state & caching
+- **React Router v7** — client-side routing
+- **Zustand v5** — auth session store
+- **react-hook-form** + **Zod** — forms and validation
+- **Tailwind CSS v4** + CSS Modules — styling
+- **@mdxeditor/editor** — rich markdown event descriptions
+- **Sonner** — toast notifications
+- **lucide-react** — icons
+- **date-fns** — date formatting
+
+### Backend
+- **Node.js 20** + TypeScript + **Express**
+- **Serverless Framework v3** + **serverless-esbuild** — Lambda packaging
+- **serverless-offline** — local Lambda emulation on port 3001
+- **MongoDB** (Atlas or DocumentDB) via the official driver
+- **OpenAI `gpt-4o-mini`** — structured JSON parsing for AI search
+- **bcryptjs** — password hashing (pure JS, no native binaries)
+- **jsonwebtoken** — JWT auth
+
+### Shared
+- **Zod** — schema definitions consumed by both packages
+- **`@event-platform/shared`** — workspace package resolving to `packages/shared/src/index.ts`
+
+---
 
 ## Monorepo Structure
 
-- `packages/shared`: shared Zod schemas/types for frontend + backend
-- **`packages/backend`**: API services, auth, events, registrations, search — see [packages/backend/README.md](packages/backend/README.md)
-- **`packages/frontend`**: responsive UI for auth, browsing, organizer dashboard, registrations — see [packages/frontend/README.md](packages/frontend/README.md)
+```
+event-platform/
+├── packages/
+│   ├── shared/          # @event-platform/shared — Zod schemas & types
+│   ├── backend/         # @event-platform/backend — Lambda API
+│   └── frontend/        # @event-platform/frontend — React SPA
+├── package.json         # root workspace scripts & ESLint dev deps
+├── pnpm-workspace.yaml
+└── tsconfig.base.json
+```
+
+---
 
 ## Prerequisites
 
-- Node.js 20+
-- pnpm 10+ (see root `packageManager` field for the repo-pinned version)
-- AWS CLI configured (for serverless deployment)
-- MongoDB Atlas cluster/database user
-- OpenAI API key
+- **Node.js 20+**
+- **pnpm 10+** (version pinned in `packageManager` field — run `corepack enable` if needed)
+- **AWS CLI** configured with deploy credentials (for Lambda + S3/CloudFront deployment)
+- **MongoDB** — Atlas cluster or DocumentDB inside a VPC
+- **OpenAI API key**
+
+---
 
 ## Environment Setup
 
-Copy `.env.example` to `.env` at repo root and set values:
+Copy the example files and fill in your values:
 
 ```bash
-MONGODB_URI=...
-JWT_SECRET=...
-JWT_EXPIRES_IN=7d
-OPENAI_API_KEY=...
-VITE_API_BASE_URL=http://localhost:3001
+# Backend secrets
+cp packages/backend/.env.example packages/backend/.env
+
+# Frontend build config
+cp packages/frontend/.env.example packages/frontend/.env
 ```
 
-Optional: set `CORS_ORIGIN` (comma-separated) when the frontend runs on a non-default origin — see `.env.example`.
+**`packages/backend/.env`**
+
+```env
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/event_platform
+JWT_SECRET=<openssl rand -base64 32>
+JWT_EXPIRES_IN=7d
+OPENAI_API_KEY=sk-...
+
+# Required for AWS Lambda deployment (VPC)
+VPC_ID=vpc-...
+SUBNET_ID_1=subnet-...
+SUBNET_ID_2=subnet-...
+```
+
+**`packages/frontend/.env`**
+
+```env
+VITE_API_BASE_URL=http://localhost:3001   # local dev
+# VITE_API_BASE_URL=https://your-api.execute-api.us-east-1.amazonaws.com  # production
+```
+
+---
 
 ## Local Development
 
@@ -57,153 +110,184 @@ pnpm install
 pnpm dev
 ```
 
-This runs backend + frontend in parallel through workspace scripts.
+Runs `serverless offline` (API on **port 3001**) and Vite dev server (frontend on **port 3000**) in parallel.
 
-## Validation Commands
+---
 
-Assessment-style checks (run from repo root):
+## Quality Commands
+
+Run all checks from the repo root:
 
 ```bash
-pnpm install
-pnpm lint
-pnpm lint:fix   # optional: auto-fix where ESLint can
-pnpm test
-pnpm typecheck
-pnpm build
+pnpm lint          # ESLint across all packages
+pnpm lint:fix      # auto-fix where possible
+pnpm typecheck     # tsc --noEmit across all packages
+pnpm test          # Vitest suites across all packages
+pnpm build         # compile shared → backend → frontend
 ```
 
-Per-package TypeScript check (same as `pnpm typecheck`): `pnpm exec tsc --noEmit` inside `packages/frontend`, etc.
+---
 
-## Architecture Overview
+## Architecture
 
-```text
-Frontend (React/Vite)
-  -> API (Express local / Lambda via API Gateway in deploy)
-    -> MongoDB Atlas (users, events, registrations)
-    -> OpenAI API (search parse only, on explicit submit)
+```
+Browser (React/Vite :3000)
+  │
+  ▼
+API Gateway HTTP API
+  │  individual Lambda functions per route
+  ▼
+Lambda handlers  →  Services  →  Repositories  →  MongoDB
+                                                 └─ OpenAI (search only)
 ```
 
-### Layering
+### Layers
 
-- Thin HTTP handlers/routes
-- Business logic in services (`auth`, `events`, `registrations`, `search`)
-- Shared schema validation through `@event-platform/shared`
+| Layer | Location | Responsibility |
+|-------|----------|----------------|
+| **Handlers** | `src/handlers/` | Parse request, call service, return HTTP response |
+| **Services** | `src/services/` | Business logic — auth, events, registrations, search |
+| **Repositories** | `src/repositories/` | All MongoDB queries — users, events, registrations |
+| **DB client** | `src/db/client.ts` | Cached connection across warm Lambda invocations |
+| **Shared** | `packages/shared/` | Zod schemas validated at both ends |
 
-## Key Design Decisions
+---
 
-- Shared schemas package:
-  - Prevents client/server validation drift and reduces duplication.
-- Separate `registrations` collection:
-  - Avoids embedded-array growth limits, improves queryability, preserves cancellation history.
-- Denormalized `registeredCount`:
-  - Event list/detail reads stay fast; writes update counter atomically.
-- Capacity race-condition guard:
-  - Registration increments only when `registeredCount < capacity` in one atomic Mongo update.
-- AI search transparency:
-  - Response returns parsed filters + events; UI displays removable chips so behavior is explainable.
-- OpenAI fallback behavior:
-  - On parse failure/timeout, service falls back to keyword-based filtering and returns a warning.
+## API Reference
 
-## API Highlights
+### Auth
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/auth/signup` | — |
+| `POST` | `/auth/login` | — |
+| `GET` | `/auth/me` | Bearer |
 
-- Auth: `/auth/signup`, `/auth/login`, `/auth/me`
-- Events: create/list/detail/update/delete + organizer list-mine
-- Registrations: register/cancel + attendee list-mine
-- Search: `/search/parse` (OpenAI parsing + DB query)
+### Events
+| Method | Path | Auth |
+|--------|------|------|
+| `GET` | `/events` | — |
+| `GET` | `/events/{id}` | — |
+| `GET` | `/events/mine` | Bearer |
+| `POST` | `/events` | Bearer |
+| `PATCH` | `/events/{id}` | Bearer (organizer) |
+| `DELETE` | `/events/{id}` | Bearer (organizer) |
+| `PATCH` | `/events/{id}/cancel` | Bearer (organizer) |
+| `PATCH` | `/events/{id}/republish` | Bearer (organizer) |
+| `PATCH` | `/events/{id}/draft` | Bearer (organizer) |
 
-Error envelope:
+### Registrations
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/events/{id}/register` | Bearer |
+| `DELETE` | `/events/{id}/register` | Bearer |
+| `GET` | `/registrations/mine` | Bearer |
+| `GET` | `/events/{id}/attendees` | Bearer (organizer) |
 
+### Search
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/search/parse` | — |
+
+### Health
+| Method | Path |
+|--------|------|
+| `GET` | `/health` → `{"ok":true}` |
+
+**Error envelope:**
 ```json
 { "error": { "code": "VALIDATION_ERROR", "message": "..." } }
 ```
 
-## UX Notes
+---
 
-- Mobile-first responsive layout; desktop enhancements at wider breakpoints.
-- Event detail uses action-state logic (not logged in, registered, full, host, ended).
-- Loading states use skeleton-style shimmer blocks.
-- Empty/error states include user guidance.
+## Key Design Decisions
+
+- **Shared schema package** — single source of truth for validation; prevents frontend/backend drift.
+- **Individual Lambda functions per route** — cold starts are scoped; each handler bundles only what it needs via esbuild.
+- **Repository layer** — isolates MongoDB queries from business logic; easy to swap or test.
+- **Separate `registrations` collection** — avoids embedded-array growth limits; preserves cancellation history and improves queryability.
+- **Denormalized `registeredCount`** — fast event list/detail reads; incremented atomically in the same update that guards capacity.
+- **Capacity race-condition guard** — registration only succeeds when `registeredCount < capacity` in a single atomic MongoDB update.
+- **AI search transparency** — response returns both the parsed filters and the matched events; the UI renders removable filter chips so users can see and undo what the AI inferred.
+- **OpenAI fallback** — on parse failure or timeout, the service falls back to keyword filtering and surfaces a warning to the UI.
+
+---
 
 ## Testing Coverage
 
-Vitest suites:
+| Package | What's tested |
+|---------|---------------|
+| **Backend** | `validateEnv()`, search parsing helpers, MongoDB filter builders |
+| **Shared** | Pagination query schema — defaults and coercion |
+| **Frontend** | API client, event API helpers, `ConfirmDialog`, `useIsMobile`, event form validators |
 
-- **Backend** (`packages/backend`): `validateEnv()`; search parsing / Mongo filter helpers
-- **Shared** (`packages/shared`): published-events query schema (defaults, coercion)
-- **Frontend** (`packages/frontend`): API client, event API helpers, `ConfirmDialog`, `useIsMobile`, event form validators
+---
 
-## Deployment Notes
+## Deployment
 
-### Backend (Lambda + API Gateway HTTP API)
+### Backend — AWS Lambda + API Gateway
 
-The API is the same Express `app` as local dev, exported as a Lambda handler in `packages/backend/src/handlers/api.ts` via `serverless-http`. **Serverless Framework v3** bundles the handler with **`serverless-esbuild`** (see `packages/backend/serverless.yml`). We stay on v3 so `serverless deploy` / `package` work without a Serverless Dashboard login (v4+ requires `serverless login` for the open-source CLI).
+The backend is a set of individual Lambda functions deployed via Serverless Framework v3. See [`packages/backend/README.md`](packages/backend/README.md#deployment) for the full step-by-step guide.
 
-1. Install [AWS CLI](https://aws.amazon.com/cli/) and configure credentials (`aws configure` or environment variables).
-2. From the repo root: `pnpm install`.
-3. Export the same secrets the app needs (or load them in your shell from `.env`):
-
-   - `MONGODB_URI`, `JWT_SECRET`, `OPENAI_API_KEY`
-   - Optional: `JWT_EXPIRES_IN` (defaults to `7d` in code and in `serverless.yml`)
-   - **Required for production browsers:** `CORS_ORIGIN` — comma-separated list of frontend origins (e.g. `https://myapp.amplifyapp.com`). If unset, the API only allows `http://localhost:3000`.
-
-4. Deploy:
+Quick summary:
 
 ```bash
+# ensure packages/backend/.env has all required vars including VPC_ID, SUBNET_IDs
 cd packages/backend
 pnpm deploy
 ```
 
-5. After deploy, Serverless prints the **HTTP API** base URL. Set your frontend `VITE_API_BASE_URL` (build-time) to that base URL (no trailing slash). Health check: `GET /health` should return `{"ok":true}`.
+After deploy, Serverless prints the HTTP API base URL. Set `VITE_API_BASE_URL` to that URL for a production frontend build.
 
-6. Optional: build the deployment artifact without uploading: `pnpm package:aws` (set the same env vars first so `${env:...}` in `serverless.yml` can resolve).
+### Frontend — S3 + CloudFront
 
-If pnpm blocks install scripts (`esbuild`, `serverless`), run `pnpm approve-builds` once and allow those packages.
+```bash
+# 1. set VITE_API_BASE_URL to your deployed API URL in packages/frontend/.env
+pnpm --filter @event-platform/frontend build
 
-**MongoDB Atlas:** allow connections from AWS Lambda (commonly `0.0.0.0/0` on a dedicated database user for the challenge, or tighter IP / VPC later).
+# 2. deploy dist/ to S3 + CloudFront via Serverless Framework
+cd packages/frontend
+pnpm deploy
+```
 
-**Password hashing:** the API uses `bcryptjs` (pure JS) so Lambda bundles do not rely on native `bcrypt` binaries.
+The `serverless.yml` creates an S3 bucket, CloudFront distribution with HTTPS redirect and SPA 404→index.html handling, and syncs `dist/` automatically.
 
-### Frontend
-
-- AWS Amplify Hosting, S3 + CloudFront, or similar static hosting for the Vite build (`pnpm --filter @event-platform/frontend build`).
-
-### Runtime behavior
-
-- Mongo connection is cached per warm Lambda container to limit connection churn.
+---
 
 ## Troubleshooting
 
-- **Mongo connection fails**: verify Atlas allowlist and connection string credentials.
-- **401 auth errors**: verify JWT secret consistency and `Authorization: Bearer <token>` format.
-- **Search failures**: ensure `OPENAI_API_KEY` is present and valid.
-- **CORS in production**: set `CORS_ORIGIN` on the Lambda environment to your deployed frontend origin(s).
-- **pnpm blocks Serverless postinstall**: if deploy fails, run `pnpm approve-builds` and allow `serverless` if prompted.
+| Symptom | Fix |
+|---------|-----|
+| Mongo connection fails locally | Confirm `MONGODB_URI` in `packages/backend/.env` and Atlas/DocumentDB network access |
+| `401` auth errors | Check `JWT_SECRET` consistency and `Authorization: Bearer <token>` header |
+| Search returns no AI results | Verify `OPENAI_API_KEY` is valid; fallback keyword search still runs |
+| Lambda can't reach MongoDB | Ensure Lambda security group is added as inbound rule on DB security group (TCP 27017) |
+| Lambda can't reach OpenAI | Private subnets need a NAT Gateway for outbound internet |
+| pnpm blocks install scripts | Run `pnpm approve-builds` and allow `esbuild` / `serverless` |
+| CloudFront returns old build | Invalidate the distribution: `aws cloudfront create-invalidation --distribution-id <id> --paths "/*"` |
 
-## If we had more time (product & platform)
+---
 
-Ideas beyond the core assessment scope — see also **“What we could do more”** in [packages/frontend/README.md](packages/frontend/README.md) and [packages/backend/README.md](packages/backend/README.md).
+## If We Had More Time
 
 ### Features users would notice
-
-- **Email flows**: confirmations, reminders, waitlists when events are full, organizer digests.
-- **Event media**: cover images (S3 + presigned uploads), ICS calendar export.
-- **Social & discovery**: sharing links with previews, saved searches, organizer profiles, richer category/tag taxonomy.
-- **Policies**: ticketing tiers, refunds, terms acceptance, GDPR export/delete-me.
-- **Collaboration**: co-organizers, delegated permissions beyond a single organizer per event.
+- **Email flows** — registration confirmations, event reminders, waitlist notifications, organizer digests
+- **Event media** — cover images via S3 presigned uploads, `.ics` calendar export
+- **Social & discovery** — sharing links with OG previews, saved searches, organizer profiles, richer tag taxonomy
+- **Collaboration** — co-organizers, delegated permissions
 
 ### Reliability & scale
-
-- **Pagination**: stable cursor pagination everywhere lists can grow.
-- **Rate limiting & abuse controls**: API Gateway / WAF, per-IP limits, captcha on auth if needed.
-- **Realtime**: websockets or SSE for registration counts without full reload.
-- **Observability**: structured logs, traces, alerting; error tracking (e.g. Sentry) front and back.
+- **Cursor pagination** — stable pagination for growing lists
+- **Rate limiting** — API Gateway / WAF, per-IP throttles, captcha on auth endpoints
+- **Realtime** — WebSocket or SSE push for registration count updates
+- **Observability** — structured logs with request IDs, distributed traces (X-Ray / OpenTelemetry), Sentry
 
 ### Security & compliance
-
-- **Secrets**: AWS Secrets Manager / SSM Parameter Store for production; tighter CORS and JWT rotation.
-- **Network**: VPC for Lambda and MongoDB Atlas Private Endpoint (instead of wide IP allowlists).
-- **Audit**: immutable audit trail for cancellations and edits.
+- **Secrets management** — AWS Secrets Manager / SSM Parameter Store instead of Lambda env vars
+- **Network hardening** — MongoDB Atlas Private Endpoint, tighter CORS, JWT rotation with refresh tokens
+- **Audit trail** — immutable log of cancellations and event edits
 
 ### Engineering quality
-
-- **Broader automated tests**: E2E (Playwright), API integration tests against a test Mongo instance, CI running lint/typecheck/test/build on every push.
+- **E2E tests** — Playwright covering critical user flows
+- **API integration tests** — against a Mongo memory server or test container
+- **CI pipeline** — lint → typecheck → test → build on every push
