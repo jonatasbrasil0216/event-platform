@@ -10,6 +10,7 @@ import { LoadingBlocks } from "../../components/loading-blocks";
 import { ParsedFilterChips } from "../../components/parsed-filter-chips";
 import { PaginationControls } from "../../components/pagination-controls";
 import { SearchBox } from "../../components/search-box";
+import { applyChipRemoval, parsedFiltersToSearchQuery } from "./build-search-query-from-filters";
 import { BROWSE_EVENTS_PAGE_SIZE } from "./constants";
 import styles from "./styles.module.css";
 
@@ -57,12 +58,12 @@ export const BrowseEventsPage = () => {
   const removeChip = (
     key: "category" | "maxCapacity" | "minCapacity" | "dateFrom" | "dateTo" | "keywords"
   ) => {
-    if (key === "category") setActiveCategory("all");
-    if (key === "dateFrom" || key === "dateTo") setSelectedDate("");
-    if (key === "maxCapacity" || key === "minCapacity" || key === "keywords") {
-      setQuery("");
-      setSubmittedQuery("");
-    }
+    const prev = eventsQuery.data?.filters;
+    if (!prev) return;
+    const nextFilters = applyChipRemoval(prev, key);
+    const nextQuery = parsedFiltersToSearchQuery(nextFilters);
+    setQuery(nextQuery);
+    setSubmittedQuery(nextQuery);
     resetPaging();
   };
 

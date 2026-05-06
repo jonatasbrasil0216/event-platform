@@ -1,5 +1,6 @@
-import { getCategoryLabel, getCategoryToneClass } from "../../utils/category-theme";
 import type { ParsedFilters } from "../../api/search";
+import { formatParsedFilterDate } from "../../utils/format-parsed-filter-date";
+import { getCategoryLabel, getCategoryToneClass } from "../../utils/category-theme";
 import styles from "./styles.module.css";
 
 interface ParsedFilterChipsProps {
@@ -34,9 +35,8 @@ export const ParsedFilterChips = ({ filters, onRemove }: ParsedFilterChipsProps)
         )}
         {filters.dateRange.from && filters.dateRange.to && (
           <button className={styles.chip} onClick={() => onRemove("dateFrom")} type="button">
-            {new Date(filters.dateRange.from).toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
-            -{" "}
-            {new Date(filters.dateRange.to).toLocaleDateString("en-US", { month: "short", day: "numeric" })} ×
+            {formatParsedFilterDate(filters.dateRange.from, "chip")} -{" "}
+            {formatParsedFilterDate(filters.dateRange.to, "chip")} ×
           </button>
         )}
         {filters.keywords.length > 0 && (
