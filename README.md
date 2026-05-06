@@ -2,6 +2,25 @@
 
 A full-stack, serverless event platform where organizers publish events and attendees browse, discover, and register — powered by AI-assisted natural-language search.
 
+## Screenshots
+Browse Page:
+<img width="1919" height="888" alt="image" src="https://github.com/user-attachments/assets/17fd169e-2301-4d2b-9ee7-21f64649aaaa" />
+
+Search by AI:
+<img width="1919" height="579" alt="image" src="https://github.com/user-attachments/assets/04a5c7f0-f08d-4dbc-a90b-cebeea0aa145" />
+
+My Events Page(Organizer Role):
+<img width="1919" height="507" alt="image" src="https://github.com/user-attachments/assets/a38fe673-954e-484b-841a-7170125d8eab" />
+
+My Registrations Page(Attendee Role):
+<img width="1919" height="568" alt="image" src="https://github.com/user-attachments/assets/82f357e7-3528-4320-a0af-702e625a9e02" />
+
+Event Detail Page(Attendee Role):
+<img width="1918" height="414" alt="image" src="https://github.com/user-attachments/assets/a823c2ec-86ee-4999-98f0-4efdc99c0299" />
+
+Event Create/Update Page(Organizer Role):
+<img width="1919" height="923" alt="image" src="https://github.com/user-attachments/assets/c16b3f2d-00e3-403e-9803-58a8e466d862" />
+
 ---
 
 ## Packages
