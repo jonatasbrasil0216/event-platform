@@ -1,6 +1,14 @@
 import { parsedSearchFiltersSchema, parseSearchQuerySchema, type Event as AppEvent } from "@event-platform/shared";
 import { z } from "zod";
 import { getOpenAIClient } from "../ai/openai";
+import {
+  AI_SEARCH_PARSE_TIMEOUT_MS,
+  AI_SEARCH_PARSE_TIMEOUT_REJECT_MESSAGE,
+  AiSearchResponseJsonError,
+  AiSearchResponseSchemaError,
+  logAiSearchParseFailure,
+  truncateForLog
+} from "../lib/ai-errors";
 import { validationError } from "../lib/errors";
 import { findEvents, toEvent } from "../repositories/events";
 
@@ -35,7 +43,7 @@ export const buildSearchMongoFilter = (filters: ParsedFilters): SearchMongoFilte
   return mongoFilter;
 };
 
-const parseWithOpenAI = async (query: string) => {
+const parseWithOpenAI = async (query: string): Promise<ParsedFilters> => {
   const now = new Date().toISOString();
   const openaiClient = getOpenAIClient();
   const completion = await openaiClient.chat.completions.create({
@@ -48,6 +56,7 @@ const parseWithOpenAI = async (query: string) => {
           "Extract event search filters from natural language. Current date is " +
           `${now}. Valid categories: tech, networking, workshop, social, other. ` +
           "Return JSON with keys: category, dateRange{from,to}, maxCapacity, minCapacity, keywords. " +
+          "For dateRange use ISO 8601 datetimes (e.g. 2026-05-06T00:00:00.000Z) or calendar dates as YYYY-MM-DD only — not prose dates. " +
           "Use null for unknown scalar fields and [] for keywords when none."
       },
       { role: "user", content: query }
@@ -55,7 +64,22 @@ const parseWithOpenAI = async (query: string) => {
   });
 
   const raw = completion.choices[0]?.message?.content ?? "{}";
-  return parsedSearchFiltersSchema.parse(JSON.parse(raw));
+  const snippet = truncateForLog(raw, 500);
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(raw);
+  } catch (cause) {
+    const parseMessage = cause instanceof Error ? cause.message : "Invalid JSON";
+    throw new AiSearchResponseJsonError(snippet, parseMessage, cause);
+  }
+
+  const validated = parsedSearchFiltersSchema.safeParse(parsedJson);
+  if (!validated.success) {
+    throw new AiSearchResponseSchemaError(validated.error);
+  }
+  
+  return validated.data;
 };
 
 export const parseSearchFilters = async (query: string): Promise<{ filters: ParsedFilters; warning?: string }> => {
@@ -66,10 +90,15 @@ export const parseSearchFilters = async (query: string): Promise<{ filters: Pars
     try {
       filters = await Promise.race([
         parseWithOpenAI(query),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000))
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(AI_SEARCH_PARSE_TIMEOUT_REJECT_MESSAGE)),
+            AI_SEARCH_PARSE_TIMEOUT_MS
+          )
+        )
       ]);
-    } catch {
-      warning = "AI parsing unavailable. Showing keyword-based results.";
+    } catch (error) {
+      warning = logAiSearchParseFailure(error, query).userWarning;
     }
   }
 

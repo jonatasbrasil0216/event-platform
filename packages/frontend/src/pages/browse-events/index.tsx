@@ -41,7 +41,13 @@ export const BrowseEventsPage = () => {
   }, [eventsQuery.data?.pageInfo.nextCursor, page]);
 
   useEffect(() => {
-    if (eventsQuery.data?.warning) toast.warning(eventsQuery.data.warning);
+    const text = eventsQuery.data?.warning;
+    if (!text) return;
+    toast.warning("Smart search", {
+      description: text,
+      id: "browse-events-smart-search-warning",
+      duration: 14_000
+    });
   }, [eventsQuery.data?.warning]);
 
   const resetPaging = () => {
